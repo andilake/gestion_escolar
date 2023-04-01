@@ -258,6 +258,7 @@ def ver_alumno():
     # Obtener alumno
     id_alumno = request.args.get("id")
     alumno = db.session.query(Alumnos).filter_by(id=id_alumno).first()
+    cambios = db.session.query(CambiosEstado).filter_by(id_alumno=id_alumno).all()
     id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=alumno.id).first()
     if id_grupo:
         id_grupo = id_grupo[0]
@@ -265,8 +266,8 @@ def ver_alumno():
     else:
         grupo_actual = None
     estado = ESTADOSV[alumno.estado]
-    print(estado)
-    return render_template("ver_alumno.html", ver=True, active="Alumno", grupo_actual=grupo_actual, alumno=alumno, estado=estado, colores=COLORES)
+    print(cambios)
+    return render_template("ver_alumno.html", ver=True, active="Alumno", grupo_actual=grupo_actual, alumno=alumno, estado=estado, colores=COLORES, cambios=cambios, estados=ESTADOSV)
 
 
 # Suspender y reacticar alumno
@@ -386,6 +387,8 @@ def grupos():
         opciones += '<option value="">N/A</option>'
     return opciones
 
+if __name__ == "__main__":
+    app.run(host="localhost", port=8000, debug=True)
 
 # python
 # from app import app, db

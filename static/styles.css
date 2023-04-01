@@ -1,14 +1,16 @@
 :root {
     --color-primario: #293241; /* Nav-bar y botones */
-    --color-primario-active: #3D5A80;
-    --color-primario-hover: #364f70;
+    --color-primario-active: #3b4f69;
+    --color-primario-hover: #334458;
     --letra-primario: white;
     --letra-primario-inactive: #9A9EA5;
     --letra-primario-hover: #C9CBCF;
     --verde: #729869;
     --verde-active: #588559;
     --amarillo: #D69900;
-    --amarillo-active: #c77b12;
+    --amarillo-active: #b17900;
+    --color-ver: #3D5A80;
+    --color-ver-active: #5281a7;
 }
 
 .suspendido {
@@ -77,6 +79,16 @@
     color: var(--letra-primario);
 }
 
+.ver {
+    background-color: var(--color-ver);
+    color: var(--letra-primario);
+}
+
+.ver:hover, .ver:focus, .ver:active, .ver:active:focus {
+    background-color: var(--color-ver-active);
+    color: var(--letra-primario);
+}
+
 #grado, #grupo {
     width: 100px;
 }
@@ -106,6 +118,14 @@ input {
 #alumnos-div {
     max-width: 1500px;
     justify-content: center;
+}
+
+#log {
+    max-height: 100px;
+    overflow: auto;
+    max-width: 500px;
+    justify-content: center;
+    margin: auto;
 }
 
 @media (max-width: 768px) {

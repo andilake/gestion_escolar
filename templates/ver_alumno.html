@@ -11,11 +11,20 @@
     <h5 class="mb-3">Estado: <span style="color:{{ colores[estado] }}; font-weight: bold;">{{ estado }}</span></h5>
     <h5 class="mb-5">Alta en sistema: {{ alumno.fecha_de_creacion.strftime('%d/%m/%Y') }}</h5>
     <h3 class="mb-3">Información escolar</h3>
-    <h5 class="mb-5">{% if grupo_actual %} Grupo: {% else %} No inscrito en ningún grupo {% endif %}
+    <h5 class="mb-5">{% if grupo_actual %} Grupo: {% else %} No hay grupos para mostrar {% endif %}
         {% if grupo_actual.grado %} {{ grupo_actual.grado }}° {% set x=" de " %}{% endif %}
         {% if grupo_actual.grupo %}{{ grupo_actual.grupo }} {% set x=" de " %} {% endif %}
         {% if grupo_actual.seccion %}{{ x }}{{ grupo_actual.seccion }}{% endif %}
     </h5>
+
+    {% if cambios %}
+        <h3 class="mb-3">Cambios de estado</h3>
+        <div class="mb-5" id="log">
+            {% for cambio in cambios %}
+                {{ cambio.fecha.strftime('%d/%m/%Y %H:%M:%S') }}: Cambió de {{ estados[cambio.estado_anterior] }} a {{ estados[cambio.estado_nuevo] }} <br>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <div class="p-2 btn-group">
         <form action="/editar_alumno">
@@ -26,5 +35,6 @@
             <button type="submit" class="btn-big btn btn-danger mx-2" title="Volver"><i class="bi bi-x-circle"></i><div>Volver</div></button>
         </form>
     </div>
+    
 
 {% endblock %}
