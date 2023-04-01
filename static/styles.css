@@ -1,0 +1,118 @@
+:root {
+    --color-primario: #293241; /* Nav-bar y botones */
+    --color-primario-active: #3D5A80;
+    --color-primario-hover: #364f70;
+    --letra-primario: white;
+    --letra-primario-inactive: #9A9EA5;
+    --letra-primario-hover: #C9CBCF;
+    --verde: #729869;
+    --verde-active: #588559;
+    --amarillo: #D69900;
+    --amarillo-active: #c77b12;
+}
+
+.suspendido {
+    color: var(--letra-primario-inactive)
+}
+
+.movil {
+    display: none;
+}
+
+.navbar {
+    background-color: var(--color-primario);
+    height: 70px;
+}
+
+.color-primario {
+    background-color: var(--color-primario);
+    color: var(--letra-primario);
+}
+
+.dropdown-item.color-primario {
+    color: var(--letra-primario-inactive);
+}
+
+.dropdown-item.color-primario:hover:not(.active) {
+    background-color: var(--color-primario-hover);
+    color: var(--letra-primario-hover);
+}
+
+.dropdown-item.active, .btn.color-primario:hover, .btn.color-primario:focus {
+    background-color: var(--color-primario-active);
+    color: var(--letra-primario);
+}
+
+
+.btn.edit {
+    padding: 0 5px;
+}
+
+.btn.edit, .btn-big {
+    margin: 0 5px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.btn.edit:active, .btn-big:active {
+    transform: scale(0.98);
+}
+
+.verde {
+    background-color: var(--verde);
+    color: var(--letra-primario);
+}
+
+.verde:hover, .verde:focus, .verde:active, .verde:active:focus {
+    background-color: var(--verde-active);
+    color: var(--letra-primario);
+}
+
+.amarillo {
+    background-color: var(--amarillo);
+    color: var(--letra-primario);
+}
+
+.amarillo:hover, .amarillo:focus, .amarillo:active, .amarillo:active:focus {
+    background-color: var(--amarillo-active);
+    color: var(--letra-primario);
+}
+
+#grado, #grupo {
+    width: 100px;
+}
+
+.bi {
+    font-size: 25px;
+    color: var(--letra-primario);
+}
+
+.bi-small {
+    font-size: 15px;
+}
+
+.d-flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+input {
+    text-align: center;
+}
+
+#correo {
+    width: 350px;
+}
+
+#alumnos-div {
+    max-width: 1500px;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .no-movil {
+        display: none;
+    }
+    .movil {
+        display: inline;
+    }
+}

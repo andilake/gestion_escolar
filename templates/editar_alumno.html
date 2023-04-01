@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% set x='Editar ' if editar else 'Alta ' %}
+
+{% block title %}
+    {{ x }} Alumno
+{% endblock %}
+
+{% block main %}
+    <h2 class="mb-5">
+        {{ x }} Alumno
+    </h2>
+    <form {% if editar %} action="/editar_alumno" {% else %} action="/alta_alumno" {% endif %} method="post">
+        <h3 class="mb-4">Información personal</h3>
+        <div class="d-flex flex-row bd-highlight mb-3 justify-content-center">
+            <div class="mx-3">
+                <input autocomplete="off" class="form-control mx-auto w-auto" id="nombre" name="nombre" placeholder="Nombre(s)" type="text" required {% if editar or ver %} value="{{ alumno.nombre }}" {% else %} autofocus {% endif %}>
+            </div>
+            <div class="mx-3">
+                <input autocomplete="off" class="form-control mx-auto w-auto" id="apellidos" name="apellidos" placeholder="Apellidos" type="text" required {% if editar or ver %} value="{{ alumno.apellidos }}" {% endif %}>
+            </div>
+        </div>
+        {% if editar %}
+            <input type="hidden" name="id" value="{{ alumno.id }}">
+            <div class="mb-4 mx-3" id="actualizar-correo" style="display: none;">
+                <label for="correo" class="form-label">¿Actualizar correo? <br> (Actual: {{ alumno.correo }})</label>
+                <select class="select form-select mx-auto w-auto" name="correo" id="correo" required>
+                    <option value="si">Sí</option>
+                    <option value="no" selected>No</option>
+                </select>
+            </div>
+            <div class="mb-5 mx-3">
+                <label for="estado" class="form-label">Estado</label>
+                    <select class="select form-select mx-auto w-auto" name="estado" id="estado" required>
+                        <option disabled value="">Estado</option>
+                        {% for estado in estados %}
+                            <option value="{{ estados[estado] }}" {% if estados[estado] == alumno.estado %} selected {% endif %}>{{ estado }}</option>
+                        {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        <h3 class="mb-4">Información escolar</h3>
+        <div class="d-flex flex-row bd-highlight mb-3 justify-content-center">
+            <div class="mb-3 mx-3">
+                <select class="select form-select mx-auto w-auto" name="seccion" id="seccion" required>
+                    <option {% if not grupo_actual %} selected {% endif %} value="">Sección</option>
+                    {% for seccion in secciones %}
+                        <option value="{{ seccion[0] }}" {% if editar and seccion[0] == grupo_actual.seccion %} selected {% endif %}>{{ seccion[0] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex flex-row justify-content-center">
+                <div class="mb-3 mx-3">
+                    <select class="select form-select mx-auto w-auto" name="grado" id="grado" required>
+                        {% if grupo_actual %}
+                            <option disabled selected value="">Grado</option>
+                            {% for grado in grados %}
+                                {% set g="N/A" if grado[0]=="" else grado[0] %}
+                                <option value="{{ grado[0] }}" {% if editar and g == grupo_actual.grado %} selected {% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="mb-3 mx-3">
+                    <select class="select form-select mx-auto w-auto" name="grupo" id="grupo" required>
+                        {% if grupo_actual %}
+                            <option disabled selected value="">Grupo</option>
+                            {% for grupo in grupos %}
+                                {% set g="N/A" if grupo[0]=="" else grupo[0] %}
+                                <option value="{{ grupo[0] }}" {% if editar and g == grupo_actual.grupo %} selected {% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="p-2 btn-group">
+            <div>
+                <button class="btn-big btn verde mx-2" type="submit" title="Enviar"><i class="bi bi-check-circle"></i>{% if editar %} <div>Guardar cambios</div> {% else %} <div>Registrar alumno</div> {% endif %}</button>
+            </div>
+    </form>
+            <form action="/lista_alumnos">
+                <button type="submit" class="btn-big btn btn-danger mx-2" title="Cancelar"><i class="bi bi-x-circle"></i><div>Cancelar</div></button>
+            </form>
+        </div>
+
+
+    <script>
+        $(document).ready(function() {
+
+            // Listar grados de la sección
+            $('#seccion').change(function() {
+                var seccion = $(this).val();
+                $.ajax({
+                    url: '/grados',
+                    type: 'POST',
+                    data: {
+                        'seccion': seccion
+                    },
+                    success: function(response) {
+                        $('#grado').html(response);
+                        $('#grupo').html('');
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+
+            // Listar grupos del grado
+            $('#grado').change(function() {
+                var seccion = $('#seccion').val();
+                var grado = $(this).val();
+                $.ajax({
+                    url: '/grupos',
+                    type: 'POST',
+                    data: {
+                        'seccion': seccion,
+                        'grado': grado
+                    },
+                    success: function(response) {
+                        $('#grupo').html(response);
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+
+            // Detectar cambios en nombre y apellidos y mostrar bloque de actualización de correo
+            const nombreInput = document.getElementById('nombre');
+            const apellidosInput = document.getElementById('apellidos');
+            const actualizarCorreoDiv = document.getElementById('actualizar-correo');
+
+            // Guardamos el valor original del nombre y apellidos
+            let nombreOriginal = nombreInput.value;
+            let apellidosOriginal = apellidosInput.value;
+
+            // Agregamos event listeners para detectar cambios en los campos de nombre y apellidos
+            nombreInput.addEventListener('input', checkForChanges);
+            apellidosInput.addEventListener('input', checkForChanges);
+
+            function checkForChanges() {
+                // Comparamos el valor actual del nombre y apellidos con el valor original
+                if (nombreInput.value !== nombreOriginal || apellidosInput.value !== apellidosOriginal) {
+                    // Si hay cambios, mostramos el campo de actualización de correo
+                    actualizarCorreoDiv.style.display = 'block';
+                } else {
+                    // Si no hay cambios, ocultamos el campo de actualización de correo
+                    actualizarCorreoDiv.style.display = 'none';
+                }
+            }
+        });
+        </script>
+
+
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Lista de alumnos
+{% endblock %}
+
+{% block scripts %}
+    <!-- Bootstrap table -->
+    <link href="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table-locale-all.min.js"></script>
+    {{super()}}
+{% endblock %}
+
+{% block main %}
+
+    <h2 class="mb-5">Lista de alumnos</h2>
+    <div class="container-sm text-start">
+        <div class="d-flex justify-content-between">
+            <div class="p-2">
+                <input autocomplete="off" autofocus id="buscar" placeholder="Buscar alumno" type="text">
+            </div>
+            <div class="p-2 btn-group">
+                <form action="/alta_alumno">
+                    <button type="submit" class="btn-big btn verde" title="Dar de alta alumno"><i class="bi bi-person-fill-add"></i><div class="mx-1 no-movil">Dar de alta alumno</div></button>
+                </form>
+                <div>
+                    <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-trash3-fill"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
+                    <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
+                        <input type="hidden" name="seleccionados" id="seleccionados">
+                        <input type="hidden" name="tabla" value="Alumnos">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <div id="alumnos-div" class="container-fluid">
+        <table id="tabla-alumnos" class="table table-hover table-bordered table-sm"
+        data-search="true" data-search-accent-neutralise="true" data-search-selector="#buscar"
+        data-show-columns="true" data-show-columns-toggle-all="true"
+        data-show-pagination-switch="true" data-show-toggle="true" data-show-fullscreen="true"
+        data-buttons-class="" data-locale="es-MX" data-visible-search="true"
+        data-page-list="[10, 25, 50, 100, All]" data-select-item-name="selectedItems">
+            <thead id="thead" class="color-primario">
+                <tr>
+                    <th data-field="state" data-checkbox="true"></th>
+                    <th data-sortable="true" scope="col">Nombre(s)</th>
+                    <th data-sortable="true" scope="col">Apellidos</th>
+                    <th data-sortable="true" scope="col">Correo electrónico</th>
+                    <th data-sortable="true" scope="col" class="col-movil">Estado</th>
+                    <th data-sortable="true" scope="col" class="col-movil">Fecha de alta</th>
+                    <th>Ver / Editar</th>
+                    <th class="col-movil">Suspender / Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                {% for i in lista %}
+                    <tr {% if i.estado == 1 %} class="suspendido" {% endif %}>
+                        <td></td>
+                        <td >{{ i.nombre }}</td>
+                        <td>{{ i.apellidos }}</td>
+                        <td>{{ i.correo }}</td>
+                        <td>{{ estados[i.estado] }}</td>
+                        <td>{{ i.fecha_de_creacion.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <!--Ver-->
+                                <form action="/ver_alumno" method="get">
+                                    <input type="hidden" name="id" value="{{ i.id }}">
+                                    <button type="submit" class="edit btn verde" title="Ver alumno"><i class="bi-small bi bi-search mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
+                                </form>
+                                <!--Editar-->
+                                <form action="/editar_alumno" method="get">
+                                    <input type="hidden" name="id" value="{{ i.id }}">
+                                    <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-pencil-square mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
+                                </form>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <!--Suspender-->
+                                <form action="/suspender_alumno" method="post" {% if i.estado in (1,2) %} style="display:none;" {% else %} style="display:inline;" {% endif %}>
+                                    <input type="hidden" name="id" value="{{ i.id }}">
+                                    <input type="hidden" name="suspender" value="si">
+                                    <button type="submit" class="edit btn amarillo" title="Suspender alumno"><i class="bi-small bi bi-eye-slash-fill mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                                </form>
+                                <!--Activar-->
+                                <form action="/suspender_alumno" method="post" {% if i.estado in (0,2) %} style="display:none;" {% elif i.estado == 1 %} style="display:inline;" {% endif %}>
+                                    <input type="hidden" name="id" value="{{ i.id }}">
+                                    <input type="hidden" name="suspender" value="no">
+                                    <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-eye-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                                </form>
+                                <!--Eliminar-->
+                                <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
+                                    <input type="hidden" name="seleccionado" id="seleccionado">
+                                    <input type="hidden" name="tabla" value="Alumnos">
+                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario({{ i.id }})"><i class="bi-small bi bi-trash3-fill mx-1"></i><span class="mx-1 no-movil">Eliminar</span></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Selección múltiple
+        $(document).ready(function(){
+
+            // Ocultar columnas en el movil
+            // Obtener columnas
+            const columns = document.querySelectorAll('.col-movil');
+            // Verificar el ancho de la pantalla
+            const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+            // Agregar el atributo data-visible="false" a las columnas si la ventana es menor a 768px
+            if (screenWidth < 768) {
+                for (let i = 0; i < columns.length; i++) {
+                    columns[i].setAttribute('data-visible', 'false');
+                }
+            }
+
+
+            // Click para seleccionar
+            $('#tabla-alumnos').bootstrapTable({
+                    clickToSelect: true
+            });
+
+            // Obtener elementos seleccionados al hacer clic en el botón
+            $('#eliminar-seleccionados').click(function(){
+            // Agregar confirmación
+                if (confirm("¿Estás seguro de que quieres eliminar a los usuarios seleccionados?")) {
+                    let seleccionados = $('#tabla-alumnos').bootstrapTable('getSelections');
+                    // Convertir arreglo de objetos a arreglo de IDs
+                    let idsSeleccionados = [];
+                    for (i in seleccionados)
+                    {
+                        idsSeleccionados.push(seleccionados[i][1]);
+                    }
+                    // Establecer el valor del input oculto con los IDs seleccionados
+                    $('#seleccionados').val(JSON.stringify(idsSeleccionados));
+                    // Enviar el formulario
+                    if (idsSeleccionados.length > 0) {
+                        $('#form-eliminar-usuarios').submit();
+                    }
+                    else {
+                        return false;
+                    }
+                }
+                else {
+                    return false;
+                }
+            });
+
+        });
+
+        // Confirmar eliminación de usuario
+        function confirmarEliminarUsuario(idUsuario) {
+                if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+                    $('#seleccionado').val(idUsuario);
+                    $('#form-eliminar-usuario').submit();
+                }
+                else {
+                    return false;
+                }
+        }
+
+
+    </script>
+
+
+{% endblock %}

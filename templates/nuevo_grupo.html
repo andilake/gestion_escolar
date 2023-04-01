@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Nuevo Grupo
+{% endblock %}
+
+{% block main %}
+    <h2 class="mb-5">Nuevo grupo</h2>
+    <form action="/nuevo_grupo" method="post">
+        <div class="mb-3">
+            <select class="select form-select mx-auto w-auto" id="seccion" name="seccion" required>
+                <option disabled selected value="">Sección</option>
+                {% for i in secciones %}
+                    <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto" id="grado" name="grado" placeholder="Grado" type="number" min="1" max="6">
+        </div>
+        <div class="mb-3">
+            <select class="select form-select mx-auto w-auto" id="grupo" name="grupo">
+                <option disabled selected value="">Grupo</option>
+                {% for i in grupos %}
+                    <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn color-primario" type="submit">Crear grupo</button>
+    </form>
+
+{% endblock %}
