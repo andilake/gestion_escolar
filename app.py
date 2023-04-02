@@ -96,6 +96,7 @@ class CambiosEstado(db.Model):
 
     def __repr__(self):
         return f'<Alumno: {self.id_alumno} cambió de {self.estado_anterior} a {self.estado_nuevo} el día {self.fecha}>'
+    
 
 
 # Crear la base de datos si no existe al correr la aplicación:
@@ -109,7 +110,6 @@ def cambiar_estado_alumno(usuario, estado):
     cambioestado = CambiosEstado(usuario.id, usuario.estado, estado)
     usuario.estado = estado
     db.session.add(cambioestado)
-    db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==usuario.id))
     return
 
 
@@ -218,19 +218,15 @@ def editar_alumno():
         # Obtener id de grupo
         id_grupo = db.session.query(Grupos.id).filter_by(seccion=seccion, grado=grado, grupo=grupo).first()
         alumno_grupo = db.session.query(alumnos_por_grupo).filter_by(id_alumno=id).first()
-        # Revisar si se añadió o eliminó al alumno de un grupo
-        if id_grupo and estado != 2:
+        # Revisar si se añadió el alumno a un grupo
+        if id_grupo:
             id_grupo = id_grupo[0]
             # Revisar si el alumno pertenece a un grupo y actualizarlo o agregarlo
             if alumno_grupo:
                 db.session.query(alumnos_por_grupo).filter_by(id_alumno=id).update({'id_grupo': id_grupo})
             else:
                 db.session.execute(alumnos_por_grupo.insert().values(id_alumno=id, id_grupo=id_grupo))
-        else:
-            if alumno_grupo:
-                db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id))
-
-        # Agregar usuario a la base de datos
+        # Subir cambios a la base de datos
         db.session.commit()
         return redirect("/lista_alumnos")
 
@@ -258,7 +254,7 @@ def ver_alumno():
     # Obtener alumno
     id_alumno = request.args.get("id")
     alumno = db.session.query(Alumnos).filter_by(id=id_alumno).first()
-    cambios = db.session.query(CambiosEstado).filter_by(id_alumno=id_alumno).all()
+    cambios = db.session.query(CambiosEstado).filter_by(id_alumno=id_alumno).order_by(CambiosEstado.fecha.desc()).all()
     id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=alumno.id).first()
     if id_grupo:
         id_grupo = id_grupo[0]
