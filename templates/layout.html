@@ -51,13 +51,15 @@
                         <a class="nav-link {% if active=='Inicio' %} active {% endif %}" aria-current="page" href="/">Inicio</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active=='Lista de alumnos' or active=='Alta alumno' or active=='Alumno' %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle {% if active in ['Lista de alumnos', 'Alta alumno', 'Alumno', 'Bajas alumnos'] %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Alumnos
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end color-primario" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item color-primario {% if active=='Lista de alumnos' %} active {% endif %}" href="/lista_alumnos">Lista de alumnos</a></li>
                         <li><hr class="dropdown-divider color-primario"></li>
                         <li><a class="dropdown-item color-primario {% if active=='Alta alumno' %} active {% endif %}" href="/alta_alumno">Alta alumno</a></li>
+                        <li><hr class="dropdown-divider color-primario"></li>
+                        <li><a class="dropdown-item color-primario {% if active=='Bajas alumnos' %} active {% endif %}" href="/bajas_alumnos">Bajas</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

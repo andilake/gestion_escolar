@@ -1,8 +1,9 @@
-### IMPORTANTE:
+### PENDIENTe:
+# Dashboard
 # Agregar vistas por grupo
 # Hacer pruebas para intentar romper el programa
-# Botón para suspender seleccionados
-# Recuperar eliminados
+# Recuperar eliminados seleccionados
+# Poner los botones de agregar, eliminar, suspender, abajo de la tabla
 ## Versión 2:
 # Agregar maestros
 # Agregar papás
@@ -79,6 +80,7 @@ alumnos_por_grupo = db.Table('alumnos_por_grupo',
     db.Column('id_grupo', db.Integer, db.ForeignKey('grupos.id'), nullable=False)
 )
 
+
 # Log de altas y bajas
 class CambiosEstado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -94,7 +96,6 @@ class CambiosEstado(db.Model):
 
     def __repr__(self):
         return f'<Alumno: {self.id_alumno} cambió de {self.estado_anterior} a {self.estado_nuevo} el día {self.fecha}>'
-    
 
 
 # Crear la base de datos si no existe al correr la aplicación:
@@ -179,10 +180,27 @@ def alta_alumno():
 # Ver alumnos
 @app.route("/lista_alumnos")
 def lista_alumnos():
-    # Obtener tamaño de pantalla
+    # Filtrar alumnos eliminados
     estados = [0, 1]
     lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
     return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV)
+
+
+@app.route("/bajas_alumnos")
+def bajas_alumnos():
+    # Obtener última fecha de eliminación
+    subconsulta = db.session.query(CambiosEstado.id_alumno, db.func.max(CambiosEstado.fecha).label('max_fecha'))\
+                        .filter(CambiosEstado.estado_nuevo == 2)\
+                        .group_by(CambiosEstado.id_alumno)\
+                        .subquery()
+    # Obtener alumnos eliminados
+    lista = db.session.query(Alumnos, CambiosEstado.fecha.label('fecha_de_eliminacion'))\
+                  .join(subconsulta, Alumnos.id == subconsulta.c.id_alumno)\
+                  .join(CambiosEstado, db.and_(CambiosEstado.id_alumno == subconsulta.c.id_alumno, CambiosEstado.fecha == subconsulta.c.max_fecha))\
+                  .filter(Alumnos.estado == 2)\
+                  .order_by(subconsulta.c.max_fecha.desc())\
+                  .all()
+    return render_template("bajas_alumnos.html", active="Bajas alumnos", lista=lista)
 
 
 # Editar alumno
@@ -264,7 +282,7 @@ def ver_alumno():
     return render_template("ver_alumno.html", ver=True, active="Alumno", grupo_actual=grupo_actual, alumno=alumno, estado=estado, colores=COLORES, cambios=cambios, estados=ESTADOSV)
 
 
-# Suspender y reacticar alumno
+# Suspender y reactivar alumno
 @app.route('/suspender_alumno', methods=["POST"])
 def suspender_alumno():
     # Obtener usuario
@@ -297,6 +315,27 @@ def eliminar_usuario():
         db.session.commit()
         print(f"{usuario} ha sido dado de baja")
     return redirect("/lista_alumnos")
+
+
+# Eliminar usuario permanentemente
+@app.route('/eliminar_permanentemente', methods=["POST"])
+def eliminar_permanentemente():
+    # Obtener usuario
+    id_usuario = request.form.get("seleccionado")
+    tabla = request.form.get("tabla")
+    if tabla == "Alumnos":
+        usuario = Alumnos.query.get(id_usuario)
+    else:
+        print("Tabla no encontrada")
+        return redirect("/lista_alumnos")
+    # Borrar el usuario si existe
+    if usuario:
+        db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id_usuario))
+        db.session.delete(usuario)
+        CambiosEstado.query.filter_by(id_alumno=id_usuario).delete()
+        db.session.commit()
+        print(f"{usuario} ha sido borrado de la base de datos")
+    return redirect("/bajas_alumnos")
 
 
 # Eliminar o suspender múltiples usuarios

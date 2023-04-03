@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Recuperar alumno
+{% endblock %}
+
+{% block scripts %}
+    <!-- Bootstrap table -->
+    <link href="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table-locale-all.min.js"></script>
+    {{super()}}
+{% endblock %}
+
+{% block main %}
+
+    <h2 class="mb-5">Alumnos dados de baja recientemente</h2>
+    <div class="container-sm text-start">
+        <div class="d-flex justify-content-between">
+            <div class="p-2">
+                <input autocomplete="off" autofocus id="buscar" placeholder="Buscar alumno" type="text">
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <div id="alumnos-div" class="container-fluid">
+        <table id="tabla-alumnos" class="table table-hover table-bordered table-sm"
+        data-search="true" data-search-accent-neutralise="true" data-search-selector="#buscar"
+        data-show-columns="true" data-show-columns-toggle-all="true"
+        data-show-pagination-switch="true" data-show-toggle="true" data-show-fullscreen="true"
+        data-buttons-class="" data-locale="es-MX" data-visible-search="true"
+        data-page-list="[10, 25, 50, 100, All]" data-select-item-name="selectedItems">
+            <thead id="thead" class="color-primario">
+                <tr>
+                    <th data-field="state" data-checkbox="true"></th>
+                    <th data-sortable="true" scope="col" data-visible="false" >ID</th>
+                    <th data-sortable="true" scope="col">Nombre(s)</th>
+                    <th data-sortable="true" scope="col">Apellidos</th>
+                    <th data-sortable="true" scope="col">Correo electrónico</th>
+                    <th data-sortable="true" scope="col">Fecha de eliminación</th>
+                    <th>Recuperar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                {% for i in lista %}
+                    <tr>
+                        <td></td>
+                        <td>{{ i.Alumnos.id }}</td>
+                        <td >{{ i.Alumnos.nombre }}</td>
+                        <td>{{ i.Alumnos.apellidos }}</td>
+                        <td>{{ i.Alumnos.correo }}</td>
+                        <td>{{ i.fecha_de_eliminacion.strftime('%d/%m/%Y') }}</td>
+                        <td>                          
+                            <!--Recuperar-->
+                            <form action="/suspender_alumno" method="post">
+                                <input type="hidden" name="id" value="{{ i.Alumnos.id }}">
+                                <input type="hidden" name="suspender" value="no">
+                                <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-check-circle-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                            </form>
+                        </td>
+                        <td>
+                            <!--Eliminar permanentemente-->
+                            <form id="form-eliminar-usuario" action="/eliminar_permanentemente" method="post">
+                                <input type="hidden" name="seleccionado" id="seleccionado">
+                                <input type="hidden" name="tabla" value="Alumnos">
+                                <button type="button" class="edit btn btn-danger" title="Eliminar permanentemente" onclick="confirmarEliminarUsuario({{ i.Alumnos.id }}, '{{ i.Alumnos.nombre }}', '{{ i.Alumnos.apellidos }}')"><i class="bi-small bi bi-exclamation-triangle-fill mx-1"></i><span class="mx-1 no-movil">Eliminar</span></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Selección múltiple
+        $(document).ready(function(){
+
+            // Click para seleccionar
+            $('#tabla-alumnos').bootstrapTable({
+                    clickToSelect: true
+            });
+
+
+        });
+
+        // Confirmar eliminación de usuario
+        function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {
+            if (confirm(`¿Estás seguro de que deseas eliminar permanentemente de la base de datos a ${nombre} ${apellidos}? \n ⚠️ ADVERTENCIA: Esta acción no puede deshacerse.`)) {
+                $('#seleccionado').val(idUsuario);
+                $('#form-eliminar-usuario').submit();
+            }
+            else {
+                return false;
+            }
+        }
+
+
+
+    </script>
+
+
+
+{% endblock %}

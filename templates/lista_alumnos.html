@@ -26,8 +26,8 @@
                     <button type="submit" class="btn-big btn verde" title="Dar de alta alumno"><i class="bi bi-person-fill-add"></i><div class="mx-1 no-movil">Dar de alta alumno</div></button>
                 </form>
                 <div>
-                    <button id="suspender-seleccionados" class="btn-big btn amarillo" title="Suspender seleccionados"><i class="bi bi-eye-slash-fill "></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
-                    <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-trash3-fill"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
+                    <button id="suspender-seleccionados" class="btn-big btn amarillo" title="Suspender seleccionados"><i class="bi bi-person-fill-lock"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
+                    <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Dar de baja seleccionados"><i class="bi bi-person-fill-dash"></i><div class="mx-1 no-movil">Dar de baja seleccionados</div></button>
                     <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
                         <input type="hidden" name="seleccionados" id="seleccionados">
                         <input type="hidden" name="accion" id="accion">
@@ -57,7 +57,7 @@
                     <th data-sortable="true" scope="col" class="col-movil">Fecha de alta</th>
                     <th>Ver</th>
                     <th class="col-movil">Editar</th>
-                    <th class="col-movil">Suspender / Eliminar</th>
+                    <th class="col-movil">Suspender / Baja</th>
                 </tr>
             </thead>
             <tbody id="tbody">
@@ -74,14 +74,14 @@
                             <!--Ver-->
                             <form action="/ver_alumno" method="get">
                                 <input type="hidden" name="id" value="{{ i.id }}">
-                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-search mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
+                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-person-vcard mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
                             </form>
                         </td>
                         <td>
                             <!--Editar-->
                             <form action="/editar_alumno" method="get">
                                 <input type="hidden" name="id" value="{{ i.id }}">
-                                <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-pencil-square mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
+                                <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-person-fill-gear mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
                             </form>
                         </td>
                         <td>
@@ -90,19 +90,19 @@
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (1,2) %} style="display:none;" {% else %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="si">
-                                    <button type="submit" class="edit btn amarillo" title="Suspender alumno"><i class="bi-small bi bi-eye-slash-fill mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                                    <button type="submit" class="edit btn amarillo" title="Suspender alumno"><i class="bi-small bi-person-fill-lock mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
                                 </form>
                                 <!--Activar-->
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (0,2) %} style="display:none;" {% elif i.estado == 1 %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="no">
-                                    <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-eye-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                                    <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
                                 </form>
                                 <!--Eliminar-->
                                 <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
                                     <input type="hidden" name="seleccionado" id="seleccionado">
                                     <input type="hidden" name="tabla" value="Alumnos">
-                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario({{ i.id }})"><i class="bi-small bi bi-trash3-fill mx-1"></i><span class="mx-1 no-movil">Eliminar</span></button>
+                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-fill-dash mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
                                 </form>
                             </div>
                         </td>
@@ -153,7 +153,7 @@
                 let seleccion = obtenerSeleccionados();
                 // Confirmar eliminación
                 if (seleccion) {
-                    if (confirm("¿Estás seguro de que quieres eliminar a los usuarios seleccionados?")) {
+                    if (confirm("¿Estás seguro de que quieres dar de baja a los usuarios seleccionados?")) {
                         $('#accion').val("eliminar");
                         $('#form-eliminar-usuarios').submit();
                     }
@@ -172,14 +172,14 @@
         });
 
         // Confirmar eliminación de usuario
-        function confirmarEliminarUsuario(idUsuario) {
-                if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-                    $('#seleccionado').val(idUsuario);
-                    $('#form-eliminar-usuario').submit();
-                }
-                else {
-                    return false;
-                }
+        function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {
+            if (confirm(`¿Estás seguro de que deseas dar de baja a ${nombre} ${apellidos}?`)) {
+                $('#seleccionado').val(idUsuario);
+                $('#form-eliminar-usuario').submit();
+            }
+            else {
+                return false;
+            }
         }
 
 
