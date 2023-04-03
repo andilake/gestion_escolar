@@ -1,10 +1,8 @@
 ### IMPORTANTE:
-# ¿Guardar en algún lugar el id de grupo de las bajas? Algo como la tabla de grupos pero para bajas y al reactivar, borrar el grupo de ahí
 # Agregar vistas por grupo
 # Hacer pruebas para intentar romper el programa
 # Botón para suspender seleccionados
 # Recuperar eliminados
-# Hacer que al usar el móvil se muestren como ocultas algunas columnas
 ## Versión 2:
 # Agregar maestros
 # Agregar papás
@@ -282,7 +280,6 @@ def suspender_alumno():
     return redirect("/lista_alumnos")
 
 
-
 # Eliminar usuario
 @app.route('/eliminar_usuario', methods=["POST"])
 def eliminar_usuario():
@@ -298,30 +295,33 @@ def eliminar_usuario():
     if usuario:
         cambiar_estado_alumno(usuario, 2)
         db.session.commit()
-        print(f"El usuario {usuario} ha sido eliminado")
+        print(f"{usuario} ha sido dado de baja")
     return redirect("/lista_alumnos")
 
 
-# Eliminar múltiples usuarios
+# Eliminar o suspender múltiples usuarios
 @app.route('/eliminar_usuarios', methods=["POST"])
 def eliminar_usuarios():
     # Obtener usuarios
     ids_usuarios = json.loads(request.form.get("seleccionados"))
+    accion = request.form.get("accion")
+    # Revisar si se tiene que suspender o eliminar
+    estado = 2 if accion == "eliminar" else 1
+    texto = "dado de baja" if accion == "eliminar" else "suspendido"
+    print(accion)
     ids_usuarios = [int(x) for x in ids_usuarios]
     tabla = request.form.get("tabla")
-    usuarios = ""
     for id in ids_usuarios:
         if tabla == "Alumnos":
             usuario = Alumnos.query.filter_by(id=id).first()
             # Revisar si el usuario existe
             if usuario:
-                cambiar_estado_alumno(usuario, 2)
-                usuarios += f" {usuario}"
+                cambiar_estado_alumno(usuario, estado)
+                print(f"{usuario} ha sido {texto}")
         else:
             print("Tabla no encontrada")
             return redirect("/lista_alumnos")
     db.session.commit()
-    print(f"Los usuarios:{usuarios} han sido eliminados")
     return redirect("/lista_alumnos")
 
 

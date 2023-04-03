@@ -26,9 +26,11 @@
                     <button type="submit" class="btn-big btn verde" title="Dar de alta alumno"><i class="bi bi-person-fill-add"></i><div class="mx-1 no-movil">Dar de alta alumno</div></button>
                 </form>
                 <div>
+                    <button id="suspender-seleccionados" class="btn-big btn amarillo" title="Suspender seleccionados"><i class="bi bi-eye-slash-fill "></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
                     <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-trash3-fill"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
                     <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
                         <input type="hidden" name="seleccionados" id="seleccionados">
+                        <input type="hidden" name="accion" id="accion">
                         <input type="hidden" name="tabla" value="Alumnos">
                     </form>
                 </div>
@@ -47,12 +49,14 @@
             <thead id="thead" class="color-primario">
                 <tr>
                     <th data-field="state" data-checkbox="true"></th>
+                    <th data-sortable="true" scope="col" data-visible="false" >ID</th>
                     <th data-sortable="true" scope="col">Nombre(s)</th>
                     <th data-sortable="true" scope="col">Apellidos</th>
                     <th data-sortable="true" scope="col">Correo electrónico</th>
                     <th data-sortable="true" scope="col" class="col-movil">Estado</th>
                     <th data-sortable="true" scope="col" class="col-movil">Fecha de alta</th>
-                    <th>Ver / Editar</th>
+                    <th>Ver</th>
+                    <th class="col-movil">Editar</th>
                     <th class="col-movil">Suspender / Eliminar</th>
                 </tr>
             </thead>
@@ -60,24 +64,25 @@
                 {% for i in lista %}
                     <tr {% if i.estado == 1 %} class="suspendido" {% endif %}>
                         <td></td>
+                        <td>{{ i.id }}</td>
                         <td >{{ i.nombre }}</td>
                         <td>{{ i.apellidos }}</td>
                         <td>{{ i.correo }}</td>
                         <td>{{ estados[i.estado] }}</td>
                         <td>{{ i.fecha_de_creacion.strftime('%d/%m/%Y') }}</td>
                         <td>
-                            <div class="btn-group">
-                                <!--Ver-->
-                                <form action="/ver_alumno" method="get">
-                                    <input type="hidden" name="id" value="{{ i.id }}">
-                                    <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-search mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
-                                </form>
-                                <!--Editar-->
-                                <form action="/editar_alumno" method="get">
-                                    <input type="hidden" name="id" value="{{ i.id }}">
-                                    <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-pencil-square mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
-                                </form>
-                            </div>
+                            <!--Ver-->
+                            <form action="/ver_alumno" method="get">
+                                <input type="hidden" name="id" value="{{ i.id }}">
+                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-search mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
+                            </form>
+                        </td>
+                        <td>
+                            <!--Editar-->
+                            <form action="/editar_alumno" method="get">
+                                <input type="hidden" name="id" value="{{ i.id }}">
+                                <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-pencil-square mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
+                            </form>
                         </td>
                         <td>
                             <div class="btn-group">
@@ -123,37 +128,46 @@
                 }
             }
 
-
             // Click para seleccionar
             $('#tabla-alumnos').bootstrapTable({
                     clickToSelect: true
             });
 
-            // Obtener elementos seleccionados al hacer clic en el botón
+            // Obtener seleccionados
+            function obtenerSeleccionados() {
+                let seleccionados = $('#tabla-alumnos').bootstrapTable('getSelections');
+                // Convertir arreglo de objetos a arreglo de IDs
+                let idsSeleccionados = [];
+                for (i in seleccionados)
+                {
+                    idsSeleccionados.push(seleccionados[i][1]);
+                }
+                // Establecer el valor del input oculto con los IDs seleccionados
+                $('#seleccionados').val(JSON.stringify(idsSeleccionados));
+                return idsSeleccionados.length > 0;
+            }
+
+            // Eliminar seleccionados
             $('#eliminar-seleccionados').click(function(){
-            // Agregar confirmación
-                if (confirm("¿Estás seguro de que quieres eliminar a los usuarios seleccionados?")) {
-                    let seleccionados = $('#tabla-alumnos').bootstrapTable('getSelections');
-                    // Convertir arreglo de objetos a arreglo de IDs
-                    let idsSeleccionados = [];
-                    for (i in seleccionados)
-                    {
-                        idsSeleccionados.push(seleccionados[i][1]);
-                    }
-                    // Establecer el valor del input oculto con los IDs seleccionados
-                    $('#seleccionados').val(JSON.stringify(idsSeleccionados));
-                    // Enviar el formulario
-                    if (idsSeleccionados.length > 0) {
+                // Obtener seleccionados
+                let seleccion = obtenerSeleccionados();
+                // Confirmar eliminación
+                if (seleccion) {
+                    if (confirm("¿Estás seguro de que quieres eliminar a los usuarios seleccionados?")) {
+                        $('#accion').val("eliminar");
                         $('#form-eliminar-usuarios').submit();
                     }
-                    else {
-                        return false;
-                    }
-                }
-                else {
-                    return false;
                 }
             });
+
+            // Suspender seleccionados
+            $('#suspender-seleccionados').click(function(){
+                // Obtener seleccionados
+                let seleccion = obtenerSeleccionados();
+                $('#accion').val("suspender");
+                $('#form-eliminar-usuarios').submit();
+            });
+
 
         });
 
