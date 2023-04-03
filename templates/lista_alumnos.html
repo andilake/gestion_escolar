@@ -15,29 +15,40 @@
 
 {% block main %}
 
-    <h2 class="mb-5">Lista de alumnos</h2>
-    <div class="container-sm text-start">
-        <div class="d-flex justify-content-between">
-            <div class="p-2">
-                <input autocomplete="off" autofocus id="buscar" placeholder="Buscar alumno" type="text">
-            </div>
-            <div class="p-2 btn-group">
-                <form action="/alta_alumno">
-                    <button type="submit" class="btn-big btn verde" title="Dar de alta alumno"><i class="bi bi-person-fill-add"></i><div class="mx-1 no-movil">Dar de alta alumno</div></button>
-                </form>
-                <div>
-                    <button id="suspender-seleccionados" class="btn-big btn amarillo" title="Suspender seleccionados"><i class="bi bi-person-fill-lock"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
-                    <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Dar de baja seleccionados"><i class="bi bi-person-fill-dash"></i><div class="mx-1 no-movil">Dar de baja seleccionados</div></button>
-                    <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
-                        <input type="hidden" name="seleccionados" id="seleccionados">
-                        <input type="hidden" name="accion" id="accion">
-                        <input type="hidden" name="tabla" value="Alumnos">
-                    </form>
+    <h2 class="mb-5">
+        {% if grupo_actual %} Grupo: {% else %} {{ titulo }} {% endif %}
+        {% if grupo_actual.grado %} {{ grupo_actual.grado }}° {% set x=" de " %}{% endif %}
+        {% if grupo_actual.grupo %}{{ grupo_actual.grupo }} {% set x=" de " %} {% endif %}
+        {% if grupo_actual.seccion %}{{ x }}{{ grupo_actual.seccion }}{% endif %}
+    </h2>
+
+    <div class="d-flex justify-content-around">
+        <div>
+            <input autocomplete="off" class="form-control mx-auto w-auto" autofocus id="buscar" placeholder="Buscar alumno" type="text">
+        </div>
+        <div>
+            <div class="d-flex flex-row bd-highlight mb-3 justify-content-center">
+                <div class="mb-3 mx-3">
+                    <select class="select form-select mx-auto w-auto" name="seccion" id="seccion" required>
+                        <option selected value="">Sección</option>
+                        {% for seccion in secciones %}
+                            <option value="{{ seccion[0] }}">{{ seccion[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="d-flex flex-row justify-content-center">
+                    <div class="mb-3 mx-3">
+                        <select class="select form-select mx-auto w-auto" name="grado" id="grado" required>
+                        </select>
+                    </div>
+                    <div class="mb-3 mx-3">
+                        <select class="select form-select mx-auto w-auto" name="grupo" id="grupo" required>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <br>
 
     <div id="alumnos-div" class="container-fluid">
         <table id="tabla-alumnos" class="table table-hover table-bordered table-sm"
@@ -74,7 +85,7 @@
                             <!--Ver-->
                             <form action="/ver_alumno" method="get">
                                 <input type="hidden" name="id" value="{{ i.id }}">
-                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-person-vcard mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
+                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-person-vcard-fill mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
                             </form>
                         </td>
                         <td>
@@ -90,19 +101,19 @@
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (1,2) %} style="display:none;" {% else %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="si">
-                                    <button type="submit" class="edit btn amarillo" title="Suspender alumno"><i class="bi-small bi-person-fill-lock mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                                    <button type="submit" class="edit btn gris-oscuro" title="Suspender alumno"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
                                 </form>
                                 <!--Activar-->
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (0,2) %} style="display:none;" {% elif i.estado == 1 %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="no">
-                                    <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                                    <button type="submit" class="edit btn gris" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
                                 </form>
                                 <!--Eliminar-->
                                 <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
                                     <input type="hidden" name="seleccionado" id="seleccionado">
                                     <input type="hidden" name="tabla" value="Alumnos">
-                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-fill-dash mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
+                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
                                 </form>
                             </div>
                         </td>
@@ -110,6 +121,25 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="botones-fijos d-flex justify-content-between">
+        <div class="btn-group">
+            <div>
+                <button id="suspender-seleccionados" class="btn-big btn gris-oscuro" title="Suspender seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
+                <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Dar de baja seleccionados"><i class="bi bi-person-dash-fill"></i><div class="mx-1 no-movil">Dar de baja seleccionados</div></button>
+                <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
+                    <input type="hidden" name="seleccionados" id="seleccionados">
+                    <input type="hidden" name="accion" id="accion">
+                    <input type="hidden" name="tabla" value="Alumnos">
+                </form>
+            </div>
+        </div>
+        <div>
+            <form action="/alta_alumno">
+                <button type="submit" class="btn-big btn verde" title="Dar de alta alumno"><i class="bi bi-person-plus-fill"></i><div class="mx-1 no-movil">Dar de alta alumno</div></button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -130,7 +160,7 @@
 
             // Click para seleccionar
             $('#tabla-alumnos').bootstrapTable({
-                    clickToSelect: true
+                clickToSelect: true
             });
 
             // Obtener seleccionados
@@ -170,6 +200,128 @@
 
 
         });
+
+
+        // Devolver alumnos de la sección y grados
+        $('#seccion').change(function() {
+                var seccion = $(this).val();
+                $.ajax({
+                    url: '/alumnos_seccion',
+                    type: 'POST',
+                    data: {
+                        'seccion': seccion
+                    },
+                    success: function(datos) {
+                        let grados = datos.grados;
+                        let lista = datos.lista;
+                        console.log(grados);
+                        console.log(lista);
+                        $('#grado').html(grados);
+                        $('#grupo').html('');
+                        let tabla = $('#alumnos-div');
+                        tabla.empty();
+                        for (let i = 0; i < lista.length; i++) {
+                            let fecha = new Date(lista[i].fecha_de_creacion);
+                            let fecha_formato = `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()}`;
+                            let row = `                           
+                                <table id="tabla-alumnos" class="table table-hover table-bordered table-sm"
+                                data-search="true" data-search-accent-neutralise="true" data-search-selector="#buscar"
+                                data-show-columns="true" data-show-columns-toggle-all="true"
+                                data-show-pagination-switch="true" data-show-toggle="true" data-show-fullscreen="true"
+                                data-buttons-class="" data-locale="es-MX" data-visible-search="true"
+                                data-page-list="[10, 25, 50, 100, All]" data-select-item-name="selectedItems">
+                                    <thead id="thead" class="color-primario">
+                                        <tr>
+                                            <th data-field="state" data-checkbox="true"></th>
+                                            <th data-sortable="true" scope="col" data-visible="false" >ID</th>
+                                            <th data-sortable="true" scope="col">Nombre(s)</th>
+                                            <th data-sortable="true" scope="col">Apellidos</th>
+                                            <th data-sortable="true" scope="col">Correo electrónico</th>
+                                            <th data-sortable="true" scope="col" class="col-movil">Estado</th>
+                                            <th data-sortable="true" scope="col" class="col-movil">Fecha de alta</th>
+                                            <th>Ver</th>
+                                            <th class="col-movil">Editar</th>
+                                            <th class="col-movil">Suspender / Baja</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody">
+                                        <tr${lista[i].estado == 1 ? ' class="suspendido"' : ''}>
+                                            <td></td>
+                                            <td>${lista[i].id}</td>
+                                            <td>${lista[i].nombre}</td>
+                                            <td>${lista[i].apellidos}</td>
+                                            <td>${lista[i].correo}</td>
+                                            <td>${lista[i].estado}</td>
+                                            <td>${fecha_formato}</td>
+                                            <td>
+                                                <form action="/ver_alumno" method="get">
+                                                <input type="hidden" name="id" value="${lista[i].id}">
+                                                <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-person-vcard-fill mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                <form action="/editar_alumno" method="get">
+                                                <input type="hidden" name="id" value="${lista[i].id}">
+                                                <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-person-fill-gear mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <!--Suspender-->
+                                                    <form action="/suspender_alumno" method="post" ${lista[i].estado_num == 1 ? 'style="display:none;"' : 'style="display:inline;"'}>
+                                                        <input type="hidden" name="id" value="${lista[i].id}">
+                                                        <input type="hidden" name="suspender" value="si">
+                                                        <button type="submit" class="edit btn gris-oscuro" title="Suspender alumno"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                                                    </form>
+                                                    <!--Activar-->
+                                                    <form action="/suspender_alumno" method="post" ${lista[i].estado_num == 0 ? 'style="display:none;"' : 'style="display:inline;"'}>
+                                                        <input type="hidden" name="id" value="${lista[i].id}">
+                                                        <input type="hidden" name="suspender" value="no">
+                                                        <button type="submit" class="edit btn gris" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                                                    </form>
+                                                    <!--Eliminar-->
+                                                    <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
+                                                        <input type="hidden" name="seleccionado" id="seleccionado">
+                                                        <input type="hidden" name="tabla" value="Alumnos">
+                                                        <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('${lista[i].id}', '${lista[i].nombre}', '${lista[i].apellidos}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>`;
+                            tabla.append(row);
+                            $('#tabla-alumnos').bootstrapTable({
+                                clickToSelect: true
+                            });
+                        }
+                    }, 
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+        });
+
+        // Listar grupos del grado
+        $('#grado').change(function() {
+            var seccion = $('#seccion').val();
+            var grado = $(this).val();
+            $.ajax({
+                url: '/grupos',
+                type: 'POST',
+                data: {
+                    'seccion': seccion,
+                    'grado': grado
+                },
+                success: function(response) {
+                    $('#grupo').html(response);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        });
+
 
         // Confirmar eliminación de usuario
         function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {

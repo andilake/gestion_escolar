@@ -11,6 +11,10 @@
     --amarillo-active: #b17900;
     --color-ver: #3D5A80;
     --color-ver-active: #5281a7;
+    --gris: #a5a5a5;
+    --gris-active: #969696;
+    --gris-oscuro: #7c7c7c;
+    --gris-oscuro-active: #646464;
 }
 
 .suspendido {
@@ -45,7 +49,6 @@
     color: var(--letra-primario);
 }
 
-
 .btn.edit {
     padding: 0 5px;
 }
@@ -53,6 +56,10 @@
 .btn.edit, .btn-big {
     margin: 0 5px;
     transition: transform 0.2s ease-in-out;
+}
+
+.btn-danger {
+    margin: 0;
 }
 
 .btn.edit:active, .btn-big:active {
@@ -76,6 +83,26 @@
 
 .amarillo:hover, .amarillo:focus, .amarillo:active, .amarillo:active:focus {
     background-color: var(--amarillo-active);
+    color: var(--letra-primario);
+}
+
+.gris {
+    background-color: var(--gris);
+    color: var(--letra-primario);
+}
+
+.gris:hover, .gris:focus, .gris:active, .gris:active:focus {
+    background-color: var(--gris-active);
+    color: var(--letra-primario);
+}
+
+.gris-oscuro {
+    background-color: var(--gris-oscuro);
+    color: var(--letra-primario);
+}
+
+.gris-oscuro:hover, .gris-oscuro:focus, .gris-oscuro:active, .gris-oscuro:active:focus {
+    background-color: var(--gris-oscuro-active);
     color: var(--letra-primario);
 }
 
@@ -118,6 +145,20 @@ input {
 #alumnos-div {
     max-width: 1500px;
     justify-content: center;
+    margin-bottom: 75px;
+}
+
+
+.botones-fijos {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    background-color: var(--color-primario);
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
 }
 
 #log {

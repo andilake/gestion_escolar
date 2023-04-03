@@ -1,9 +1,11 @@
-### PENDIENTe:
+### PENDIENTE:
 # Dashboard
+# Subida masiva de usuarios
 # Agregar vistas por grupo
 # Hacer pruebas para intentar romper el programa
 # Recuperar eliminados seleccionados
 # Poner los botones de agregar, eliminar, suspender, abajo de la tabla
+# Hacer el filtro por grupo desde lista de alumnos, hacer que obtenga la sección, grado y grupo desde el formulario y que vuelva a recargarse cada que seleccione un grupo nuevo
 ## Versión 2:
 # Agregar maestros
 # Agregar papás
@@ -12,7 +14,7 @@
 
 # Importar librerías
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session, jsonify
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 import json
@@ -56,6 +58,9 @@ class Alumnos(db.Model):
 
     def __repr__(self):
        return f"<Alumno {self.id}: {self.nombre} {self.apellidos}>"
+    
+    def to_dict(self):
+        return {'id': self.id, 'nombre': self.nombre, 'apellidos': self.nombre, 'correo': self.correo, 'estado': ESTADOSV[self.estado], 'estado_num': self.estado, 'fecha_de_creacion': self.fecha_de_creacion}
 
 
 # Tabla de grupos
@@ -145,6 +150,17 @@ def index():
     return render_template("index.html", active="Inicio")
 
 
+# Ver alumnos
+@app.route("/lista_alumnos")
+def lista_alumnos():
+    # Filtrar alumnos eliminados
+    estados = [0, 1]
+    lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+    seccion = db.session.query(Grupos.seccion).distinct().all()
+    titulo = "Lista general de alumnos"
+    return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, titulo=titulo, grupo_actual=None, secciones=seccion)
+
+
 # Alumno nuevo
 @app.route("/alta_alumno", methods=["GET", "POST"])
 def alta_alumno():
@@ -175,15 +191,6 @@ def alta_alumno():
     else:
         seccion = db.session.query(Grupos.seccion).distinct().all()
         return render_template("editar_alumno.html", active="Alta alumno", secciones=seccion)
-
-
-# Ver alumnos
-@app.route("/lista_alumnos")
-def lista_alumnos():
-    # Filtrar alumnos eliminados
-    estados = [0, 1]
-    lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
-    return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV)
 
 
 @app.route("/bajas_alumnos")
@@ -389,8 +396,6 @@ def nuevo_grupo():
         return render_template("nuevo_grupo.html", active="Nuevo grupo", secciones=SECCIONES, grupos=GRUPOS)
 
 
-# Funciones para llenar información de grupo
-
 # Rellenar grado
 @app.route('/grados', methods=['POST'])
 def grados():
@@ -405,8 +410,8 @@ def grados():
             opciones += '<option value="">N/A</option>'
         else:
             opciones += '<option value="' + str(grado[0]) + '">' + str(grado[0]) + '</option>'
-    print(opciones)
     return opciones
+
 
 # Rellenar grupo
 @app.route('/grupos', methods=['POST'])
@@ -422,10 +427,40 @@ def grupos():
         opciones += '<option value="">N/A</option>'
     return opciones
 
-if __name__ == "__main__":
-    app.run(host="localhost", port=8000, debug=True)
+
+# Obtener alumnos de la seccion
+@app.route('/alumnos_seccion', methods=['POST'])
+def alumnos_seccion():
+    # Obtener la seccion
+    seccion = request.form.get('seccion')
+    # Obtener los grados que hay en la seccion
+    query = db.session.query(Grupos.id, Grupos.grado).filter_by(seccion=seccion).order_by(Grupos.grado).all()
+    ids_grupo = []
+    ids_alumno = []
+    grados = []
+    for i in query:
+        ids_grupo.append(i[0])
+        if(i[1] != ""):
+            grados.append(i[1])
+    grados = list(set(grados))
+    grados.sort()
+    query_alumnos = db.session.query(alumnos_por_grupo.c.id_alumno).filter(alumnos_por_grupo.c.id_grupo.in_(ids_grupo)).distinct().all()
+    for i in query_alumnos:
+        ids_alumno.append(i[0])
+    estados = [0, 1]
+    alumnos = Alumnos.query.filter(Alumnos.id.in_(ids_alumno), Alumnos.estado.in_(estados)).all()
+    lista = [a.to_dict() for a in alumnos]
+    # Crear una opción inicial para el selector
+    opciones = '<option selected value="">Grado</option>'
+    for grado in grados:
+        opciones += '<option value="' + str(grado) + '">' + str(grado) + '</option>'
+    print(lista)
+    return jsonify({'grados': opciones, 'lista': lista})
 
 # python
 # from app import app, db
 # app.app_context().push()
 # db.create_all()
+
+# set FLASK_ENV=development
+# $env:FLASK_DEBUG=1
