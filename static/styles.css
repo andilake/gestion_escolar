@@ -17,6 +17,11 @@
     --gris-oscuro-active: #646464;
 }
 
+.switch-primario .form-check-input:checked {
+    background-color: var(--color-ver);
+    border-color: var(--color-ver);
+}
+
 .suspendido {
     color: var(--letra-primario-inactive)
 }
