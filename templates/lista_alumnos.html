@@ -244,29 +244,33 @@
                 $('#form-eliminar-usuarios').submit();
             });
 
+            // Devolver alumnos de la sección
+            $('#seccion').change(function() {
+                // Si hay un grupo o grado seleccionado, quitarlo
+                $('#grado').val("");
+                $('#grupo').val("");
+                $('#form-buscar-grupo').submit();
+            });
+
+            // Devolver alumnos del grado
+            $('#grado').change(function() {
+                // Si hay un grupo seleccionado, quitarlo
+                $('#grupo').val("");
+                $('#form-buscar-grupo').submit();
+            });
+
+            // Devolver alumnos del grupo
+            $('#grupo').change(function() {
+                $('#form-buscar-grupo').submit();
+            });
+
+            // Mostrar / ocultar suspendidos
+            $('#suspendidos').change(function() {
+                $('#form-buscar-grupo').submit();
+            });
+
         });
 
-        // Devolver alumnos de la sección
-        $('#seccion').change(function() {
-            $('#form-buscar-grupo').submit();
-        });
-
-        // Devolver alumnos del grado
-        $('#grado').change(function() {
-            // Si hay un grupo seleccionado, quitarlo
-            $('#grupo').val("");
-            $('#form-buscar-grupo').submit();
-        });
-
-        // Devolver alumnos del grupo
-        $('#grupo').change(function() {
-            $('#form-buscar-grupo').submit();
-        });
-
-        // Mostrar / ocultar suspendidos
-        $('#suspendidos').change(function() {
-            $('#form-buscar-grupo').submit();
-        });
 
         // Confirmar eliminación de usuario
         function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {

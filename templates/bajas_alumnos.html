@@ -73,6 +73,18 @@
         </table>
     </div>
 
+    <div class="botones-fijos">
+        <div class="btn-group">
+            <div>
+                <button id="recuperar-seleccionados" class="btn-big btn verde" title="Recuperar seleccionados"><i class="bi bi-person-dash-fill"></i><div class="mx-1 no-movil">Recuperar seleccionados</div></button>
+                <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
+                <form id="form-seleccionados" method="post">
+                    <input type="hidden" name="seleccionados" id="seleccionados">
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Selección múltiple
         $(document).ready(function(){
@@ -82,6 +94,42 @@
                     clickToSelect: true
             });
 
+            // Obtener seleccionados
+            function obtenerSeleccionados() {
+                let seleccionados = $('#tabla-alumnos').bootstrapTable('getSelections');
+                // Convertir arreglo de objetos a arreglo de IDs
+                let idsSeleccionados = [];
+                for (i in seleccionados)
+                {
+                    idsSeleccionados.push(seleccionados[i][1]);
+                }
+                // Establecer el valor del input oculto con los IDs seleccionados
+                $('#seleccionados').val(JSON.stringify(idsSeleccionados));
+                return idsSeleccionados.length > 0;
+            }
+
+            // Recuperar seleccionados
+            $('#recuperar-seleccionados').click(function(){
+                // Obtener seleccionados
+                let seleccion = obtenerSeleccionados();
+                $('#accion').val("reactivar");
+                $('#form-seleccionados').attr('action','/recuperar_alumnos')
+                $('#form-seleccionados').submit();
+            });
+
+            // Eliminar seleccionados
+            $('#eliminar-seleccionados').click(function(){
+                // Obtener seleccionados
+                let seleccion = obtenerSeleccionados();
+                // Confirmar eliminación
+                if (seleccion) {
+                    if (confirm("¿Estás seguro de que quieres eliminar permanentemente de la base de datos a los usuarios seleccionados? \n ⚠️ ADVERTENCIA: Esta acción no puede deshacerse.")) {
+                        $('#accion').val("eliminar");
+                        $('#form-seleccionados').attr('action','/eliminar_alumnos_permanentemente')
+                        $('#form-seleccionados').submit();
+                    }
+                }
+            });
 
         });
 
@@ -89,17 +137,12 @@
         function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {
             if (confirm(`¿Estás seguro de que deseas eliminar permanentemente de la base de datos a ${nombre} ${apellidos}? \n ⚠️ ADVERTENCIA: Esta acción no puede deshacerse.`)) {
                 $('#seleccionado').val(idUsuario);
-                $('#form-eliminar-usuario').submit();
+                $('#form-multiples-usuarios').submit();
             }
             else {
                 return false;
             }
         }
-
-
-
     </script>
-
-
 
 {% endblock %}

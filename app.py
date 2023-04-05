@@ -417,22 +417,22 @@ def recuperar_alumno():
 @app.route('/eliminar_permanentemente', methods=["POST"])
 def eliminar_permanentemente():
     # Obtener usuario
-    id_usuario = request.form.get("seleccionado")
-    usuario = Alumnos.query.get(id_usuario)
+    id = request.form.get("seleccionado")
+    alumno = Alumnos.query.get(id)
     # Borrar el usuario si existe
-    if usuario:
-        db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id_usuario))
-        db.session.delete(usuario)
-        CambiosEstado.query.filter_by(id_alumno=id_usuario).delete()
+    if alumno:
+        db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id))
+        db.session.delete(alumno)
+        CambiosEstado.query.filter_by(id_alumno=id).delete()
         db.session.commit()
-        print(f"{usuario} ha sido borrado de la base de datos")
+        print(f"{alumno} ha sido borrado de la base de datos")
     return redirect("/bajas_alumnos")
 
 
 # Eliminar o suspender múltiples alumnos
 @app.route('/eliminar_alumnos', methods=["POST"])
 def eliminar_alumnos():
-    # Obtener ids alumnos y convertirlas a lista
+    # Obtener ids alumnos y convertirlas a entero
     ids_alumnos = json.loads(request.form.get("seleccionados"))
     ids_alumnos = [int(x) for x in ids_alumnos]
     # Obtener grupo actual
@@ -451,8 +451,8 @@ def eliminar_alumnos():
         # Revisar si el alumno existe
         if alumno:
             cambiar_estado_alumno(alumno, estado)
+            db.session.commit()
             print(f"{alumno} ha sido {texto}")
-    db.session.commit()
     # Obtener lista de alumnos
     datos = consultar_alumnos(grupo_actual, suspendidos, estados)
     if datos:        
@@ -461,6 +461,39 @@ def eliminar_alumnos():
         lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
+
+# Eliminar varios alumnos permanentemente
+@app.route('/eliminar_alumnos_permanentemente', methods=["POST"])
+def eliminar_alumnos_permanentemente():
+    # Obtener ids alumnos y convertirlas a entero
+    ids_alumnos = json.loads(request.form.get("seleccionados"))
+    ids_alumnos = [int(x) for x in ids_alumnos]
+    for id in ids_alumnos:
+        alumno = Alumnos.query.get(id)
+        # Borrar el usuario si existe
+        if alumno:
+            db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id))
+            db.session.delete(alumno)
+            CambiosEstado.query.filter_by(id_alumno=id).delete()
+            db.session.commit()
+            print(f"{alumno} ha sido borrado de la base de datos")
+    return redirect("/bajas_alumnos")
+
+
+# Recuperar varios alumnos
+@app.route('/recuperar_alumnos', methods=["POST"])
+def recuperar_alumnos():
+    # Obtener ids alumnos y convertirlas a entero
+    ids_alumnos = json.loads(request.form.get("seleccionados"))
+    ids_alumnos = [int(x) for x in ids_alumnos]
+    for id in ids_alumnos:
+        alumno = Alumnos.query.get(id)
+        # Borrar el usuario si existe
+        if alumno:
+            cambiar_estado_alumno(alumno, 0)
+            db.session.commit()
+            print(f"{alumno} ha sido recuperado")
+    return redirect("/bajas_alumnos")
 
 
 # Grupo nuevo
