@@ -143,7 +143,10 @@
                                 <!--Eliminar-->
                                 <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
                                     <input type="hidden" name="seleccionado" id="seleccionado">
-                                    <input type="hidden" name="tabla" value="Alumnos">
+                                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                                    <input type="hidden" name="susp" value="{{ suspendidos }}">
                                     <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
                                 </form>
                             </div>

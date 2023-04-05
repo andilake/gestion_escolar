@@ -3,7 +3,6 @@
 # Subida masiva de usuarios
 # Hacer pruebas para intentar romper el programa
 # Recuperar eliminados seleccionados
-# Redirigir a la vista de tabla actual (POST) al dar de baja y suspender CONTINUAR!!!!
 # Hacer el filtro por grupo desde lista de alumnos, hacer que obtenga la sección, grado y grupo desde el formulario y que vuelva a recargarse cada que seleccione un grupo nuevo
 # Agregar login
 ## Versión 2:
@@ -360,11 +359,12 @@ def suspender_alumno():
     estado = 1 if suspender == "si" else 0
     # Obtener las secciones
     secciones = db.session.query(Grupos.seccion).distinct().all()
-    # Borrar el usuario si existe
+    # Suspender el alumno si existe
     if alumno:
         cambiar_estado_alumno(alumno, estado)
         db.session.commit()
         print(f"{alumno} ha sido {'suspendido' if suspender == 'si' else 'reactivado'}")
+    # Obtener lista de alumnos
     datos = consultar_alumnos(grupo_actual, suspendidos, estados)
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
@@ -377,33 +377,49 @@ def suspender_alumno():
 # Eliminar usuario
 @app.route('/eliminar_usuario', methods=["POST"])
 def eliminar_usuario():
-    # Obtener usuario
-    id_usuario = request.form.get("seleccionado")
-    tabla = request.form.get("tabla")
-    if tabla == "Alumnos":
-        usuario = Alumnos.query.get(id_usuario)
-    else:
-        print("Tabla no encontrada")
-        return redirect("/lista_alumnos")
-    # Borrar el usuario si existe
-    if usuario:
-        cambiar_estado_alumno(usuario, 2)
+    # Obtener alumno
+    id = request.form.get("seleccionado")
+    alumno = Alumnos.query.get(id)
+    # Obtener el grupo actual
+    grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
+    # Verificar si se requiere consultar suspendidos y establecer el estado
+    suspendidos =  request.form.get("susp")
+    estados = [0, 1] if suspendidos else [0]
+    # Obtener las secciones
+    secciones = db.session.query(Grupos.seccion).distinct().all()
+    # Borrar el alumno si existe
+    if alumno:
+        cambiar_estado_alumno(alumno, 2)
         db.session.commit()
-        print(f"{usuario} ha sido dado de baja")
-    return redirect("/lista_alumnos")
+        print(f"{alumno} ha sido dado de baja")
+    # Obtener lista de alumnos
+    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    if datos:        
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
+    else:
+        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
-# Eliminar usuario permanentemente
+# Recuperar alumno
+@app.route('/recuperar_alumno', methods=["POST"])
+def recuperar_alumno():
+    # Obtener alumno
+    id = request.form.get("id")
+    alumno = Alumnos.query.get(id)
+    if alumno:
+        cambiar_estado_alumno(alumno, 0)
+        db.session.commit()
+        print(f"{alumno} ha sido recuperado")
+    # Obtener lista de alumnos
+    return redirect("/bajas_alumnos")
+
+# Eliminar alumno permanentemente
 @app.route('/eliminar_permanentemente', methods=["POST"])
 def eliminar_permanentemente():
     # Obtener usuario
     id_usuario = request.form.get("seleccionado")
-    tabla = request.form.get("tabla")
-    if tabla == "Alumnos":
-        usuario = Alumnos.query.get(id_usuario)
-    else:
-        print("Tabla no encontrada")
-        return redirect("/lista_alumnos")
+    usuario = Alumnos.query.get(id_usuario)
     # Borrar el usuario si existe
     if usuario:
         db.session.execute(alumnos_por_grupo.delete().where(alumnos_por_grupo.c.id_alumno==id_usuario))

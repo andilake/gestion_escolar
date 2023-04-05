@@ -55,9 +55,8 @@
                         <td>{{ i.fecha_de_eliminacion.strftime('%d/%m/%Y') }}</td>
                         <td>                          
                             <!--Recuperar-->
-                            <form action="/suspender_alumno" method="post">
+                            <form action="/recuperar_alumno" method="post">
                                 <input type="hidden" name="id" value="{{ i.Alumnos.id }}">
-                                <input type="hidden" name="suspender" value="no">
                                 <button type="submit" class="edit btn verde" title="Rectivar alumno"><i class="bi-small bi bi-person-check-fill mx-1"></i><span class="mx-1 no-movil">Recuperar</span></button>
                             </form>
                         </td>
@@ -65,7 +64,6 @@
                             <!--Eliminar permanentemente-->
                             <form id="form-eliminar-usuario" action="/eliminar_permanentemente" method="post">
                                 <input type="hidden" name="seleccionado" id="seleccionado">
-                                <input type="hidden" name="tabla" value="Alumnos">
                                 <button type="button" class="edit btn btn-danger" title="Eliminar permanentemente" onclick="confirmarEliminarUsuario({{ i.Alumnos.id }}, '{{ i.Alumnos.nombre }}', '{{ i.Alumnos.apellidos }}')"><i class="bi-small bi bi-exclamation-triangle-fill mx-1"></i><span class="mx-1 no-movil">Eliminar</span></button>
                             </form>
                         </td>
