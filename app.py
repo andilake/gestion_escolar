@@ -3,7 +3,7 @@
 # Subida masiva de usuarios
 # Hacer pruebas para intentar romper el programa
 # Recuperar eliminados seleccionados
-# Redirigir a la vista de tabla actual (POST) al dar de baja y suspender
+# Redirigir a la vista de tabla actual (POST) al dar de baja y suspender CONTINUAR!!!!
 # Hacer el filtro por grupo desde lista de alumnos, hacer que obtenga la sección, grado y grupo desde el formulario y que vuelva a recargarse cada que seleccione un grupo nuevo
 # Agregar login
 ## Versión 2:
@@ -145,6 +145,43 @@ def crear_correo(nombre, apellidos):
     return correo
 
 
+def consultar_alumnos(grupo_actual, suspendidos, estado):
+    # Verificar si se seleccionó una sección, si no, mostrar todos los alumnos
+    if grupo_actual["seccion"] == "":
+        return None
+    # Obtener los grados de la sección seleccionada
+    grados = db.session.query(Grupos.grado).filter_by(seccion=grupo_actual["seccion"]).distinct().order_by(Grupos.grado).all()
+    # Verificar si hay un grado y un grupo seleccionados
+    if grupo_actual["grado"] != "" and grupo_actual["grupo"] != "":
+        grupo_actual["grado"] = int(grupo_actual["grado"])
+        # Obtener ID de grupo
+        query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"], grupo=grupo_actual["grupo"]).order_by(Grupos.grado).all()
+        # Obtener los grupos que hay en el grado
+        grupos = db.session.query(Grupos.grupo).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).distinct().order_by(Grupos.grupo).all()
+    # Si no hay un grupo seleccionado, verificar si hay un grado y repetir lo anterior
+    elif grupo_actual["grado"] != "":
+        grupo_actual["grado"] = int(grupo_actual["grado"])
+        query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).order_by(Grupos.grado).all()
+        grupos = db.session.query(Grupos.grupo).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).distinct().order_by(Grupos.grupo).all()
+    # Si no hay un grado seleccionado, obtener los ids de todos los grupos de la sección
+    else:
+        query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"]).order_by(Grupos.grado).all()
+        grupos = None
+    ids_grupo = []
+    ids_alumno = []
+    # Sacar los ids como una lista
+    for i in query:
+        ids_grupo.append(i[0])
+    # Obtener los ids de los alumnos que pertenecen a los grupos seleccionados
+    query_alumnos = db.session.query(alumnos_por_grupo.c.id_alumno).filter(alumnos_por_grupo.c.id_grupo.in_(ids_grupo)).distinct().all()
+    for i in query_alumnos:
+        ids_alumno.append(i[0])
+    # Obtener alumnos
+    lista = Alumnos.query.filter(Alumnos.id.in_(ids_alumno), Alumnos.estado.in_(estado)).all()
+    datos = {'lista': lista, 'grados': grados, 'grupos': grupos}
+    return datos
+
+
 # Página de inicio
 @app.route("/")
 def index():
@@ -165,40 +202,12 @@ def lista_alumnos():
         estado = [0, 1] if suspendidos else [0]
         # Obtener las secciones
         secciones = db.session.query(Grupos.seccion).distinct().all()
-        # Verificar si se seleccionó una sección, si no, mostrar todos los alumnos
-        if grupo_actual["seccion"] == "":
+        datos = consultar_alumnos(grupo_actual, suspendidos,estado)
+        if datos:        
+            return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
+        else:
             lista = Alumnos.query.filter(Alumnos.estado.in_(estado)).all()
             return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
-        # Obtener los grados de la sección seleccionada
-        grados = db.session.query(Grupos.grado).filter_by(seccion=grupo_actual["seccion"]).distinct().order_by(Grupos.grado).all()
-        # Verificar si hay un grado y un grupo seleccionados
-        if grupo_actual["grado"] != "" and grupo_actual["grupo"] != "":
-            grupo_actual["grado"] = int(grupo_actual["grado"])
-            # Obtener ID de grupo
-            query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"], grupo=grupo_actual["grupo"]).order_by(Grupos.grado).all()
-            # Obtener los grupos que hay en el grado
-            grupos = db.session.query(Grupos.grupo).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).distinct().order_by(Grupos.grupo).all()
-        # Si no hay un grupo seleccionado, verificar si hay un grado y repetir lo anterior
-        elif grupo_actual["grado"] != "":
-            grupo_actual["grado"] = int(grupo_actual["grado"])
-            query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).order_by(Grupos.grado).all()
-            grupos = db.session.query(Grupos.grupo).filter_by(seccion=grupo_actual["seccion"], grado=grupo_actual["grado"]).distinct().order_by(Grupos.grupo).all()
-        # Si no hay un grado seleccionado, obtener los ids de todos los grupos de la sección
-        else:
-            query = db.session.query(Grupos.id).filter_by(seccion=grupo_actual["seccion"]).order_by(Grupos.grado).all()
-            grupos = None
-        ids_grupo = []
-        ids_alumno = []
-        # Sacar los ids como una lista
-        for i in query:
-            ids_grupo.append(i[0])
-        # Obtener los ids de los alumnos que pertenecen a los grupos seleccionados
-        query_alumnos = db.session.query(alumnos_por_grupo.c.id_alumno).filter(alumnos_por_grupo.c.id_grupo.in_(ids_grupo)).distinct().all()
-        for i in query_alumnos:
-            ids_alumno.append(i[0])
-        # Obtener alumnos
-        lista = Alumnos.query.filter(Alumnos.id.in_(ids_alumno), Alumnos.estado.in_(estado)).all()        
-        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=grados, grupos=grupos, suspendidos=suspendidos)
 
     else:
         # Mostrar todos los alumnos activos
@@ -339,17 +348,30 @@ def ver_alumno():
 # Suspender y reactivar alumno
 @app.route('/suspender_alumno', methods=["POST"])
 def suspender_alumno():
-    # Obtener usuario
+    # Obtener usuario y grupo actual
     id = request.form.get("id")
+    grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
+    # Verificar si se requiere consultar suspendidos y establecer el estado
+    suspendidos =  request.form.get("susp")
+    estados = [0, 1] if suspendidos else [0]
+    # Obtener al alumno y ver si se requiere suspender o activar
     suspender = request.form.get("suspender")
     alumno = Alumnos.query.get(id)
     estado = 1 if suspender == "si" else 0
+    # Obtener las secciones
+    secciones = db.session.query(Grupos.seccion).distinct().all()
     # Borrar el usuario si existe
     if alumno:
         cambiar_estado_alumno(alumno, estado)
         db.session.commit()
         print(f"{alumno} ha sido {'suspendido' if suspender == 'si' else 'reactivado'}")
-    return redirect("/lista_alumnos")
+    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    if datos:        
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
+    else:
+        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
+
 
 
 # Eliminar usuario

@@ -124,12 +124,20 @@
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (1,2) %} style="display:none;" {% else %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="si">
+                                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                                    <input type="hidden" name="susp" value="{{ suspendidos }}">
                                     <button type="submit" class="edit btn gris-oscuro" title="Suspender alumno"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
                                 </form>
                                 <!--Activar-->
                                 <form action="/suspender_alumno" method="post" {% if i.estado in (0,2) %} style="display:none;" {% elif i.estado == 1 %} style="display:inline;" {% endif %}>
                                     <input type="hidden" name="id" value="{{ i.id }}">
                                     <input type="hidden" name="suspender" value="no">
+                                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                                    <input type="hidden" name="susp" value="{{ suspendidos }}">
                                     <button type="submit" class="edit btn gris" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
                                 </form>
                                 <!--Eliminar-->
