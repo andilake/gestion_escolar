@@ -373,7 +373,6 @@ def suspender_alumno():
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
-
 # Eliminar usuario
 @app.route('/eliminar_usuario', methods=["POST"])
 def eliminar_usuario():
@@ -430,30 +429,38 @@ def eliminar_permanentemente():
     return redirect("/bajas_alumnos")
 
 
-# Eliminar o suspender múltiples usuarios
-@app.route('/eliminar_usuarios', methods=["POST"])
-def eliminar_usuarios():
-    # Obtener usuarios
-    ids_usuarios = json.loads(request.form.get("seleccionados"))
+# Eliminar o suspender múltiples alumnos
+@app.route('/eliminar_alumnos', methods=["POST"])
+def eliminar_alumnos():
+    # Obtener ids alumnos y convertirlas a lista
+    ids_alumnos = json.loads(request.form.get("seleccionados"))
+    ids_alumnos = [int(x) for x in ids_alumnos]
+    # Obtener grupo actual
+    grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
+    # Verificar si se requiere consultar suspendidos y establecer el estado
+    suspendidos =  request.form.get("susp")
+    estados = [0, 1] if suspendidos else [0]
+    # Revisar si se tienen que suspender, eliminar o activar 
     accion = request.form.get("accion")
-    # Revisar si se tiene que suspender o eliminar
-    estado = 2 if accion == "eliminar" else 1
+    estado = 2 if accion == "eliminar" else 1 if accion == "suspender" else 0
     texto = "dado de baja" if accion == "eliminar" else "suspendido"
-    print(accion)
-    ids_usuarios = [int(x) for x in ids_usuarios]
-    tabla = request.form.get("tabla")
-    for id in ids_usuarios:
-        if tabla == "Alumnos":
-            usuario = Alumnos.query.filter_by(id=id).first()
-            # Revisar si el usuario existe
-            if usuario:
-                cambiar_estado_alumno(usuario, estado)
-                print(f"{usuario} ha sido {texto}")
-        else:
-            print("Tabla no encontrada")
-            return redirect("/lista_alumnos")
+    # Obtener las secciones
+    secciones = db.session.query(Grupos.seccion).distinct().all()
+    for id in ids_alumnos:
+        alumno = Alumnos.query.filter_by(id=id).first()
+        # Revisar si el alumno existe
+        if alumno:
+            cambiar_estado_alumno(alumno, estado)
+            print(f"{alumno} ha sido {texto}")
     db.session.commit()
-    return redirect("/lista_alumnos")
+    # Obtener lista de alumnos
+    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    if datos:        
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
+    else:
+        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
+
 
 
 # Grupo nuevo

@@ -58,8 +58,11 @@
     padding: 0 5px;
 }
 
+.btn.edit {
+    margin: 0 3px;
+}
+
 .btn.edit, .btn-big {
-    margin: 0 5px;
     transition: transform 0.2s ease-in-out;
 }
 

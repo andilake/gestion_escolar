@@ -160,12 +160,16 @@
     <div class="botones-fijos d-flex justify-content-between">
         <div class="btn-group">
             <div>
-                <button id="suspender-seleccionados" class="btn-big btn gris-oscuro" title="Suspender seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
                 <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Dar de baja seleccionados"><i class="bi bi-person-dash-fill"></i><div class="mx-1 no-movil">Dar de baja seleccionados</div></button>
-                <form id="form-eliminar-usuarios" action="/eliminar_usuarios" method="post">
+                <button id="suspender-seleccionados" class="btn-big btn gris-oscuro" title="Suspender seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
+                <button id="reactivar-seleccionados" class="btn-big btn gris" title="Reactivar seleccionados"><i class="bi bi-person-fill"></i><div class="mx-1 no-movil">Reactivar seleccionados</div></button>
+                <form id="form-eliminar-usuarios" action="/eliminar_alumnos" method="post">
                     <input type="hidden" name="seleccionados" id="seleccionados">
                     <input type="hidden" name="accion" id="accion">
-                    <input type="hidden" name="tabla" value="Alumnos">
+                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                    <input type="hidden" name="susp" value="{{ suspendidos }}">
                 </form>
             </div>
         </div>
@@ -232,6 +236,13 @@
                 $('#form-eliminar-usuarios').submit();
             });
 
+            // Reactivar seleccionados
+            $('#reactivar-seleccionados').click(function(){
+                // Obtener seleccionados
+                let seleccion = obtenerSeleccionados();
+                $('#accion').val("reactivar");
+                $('#form-eliminar-usuarios').submit();
+            });
 
         });
 
