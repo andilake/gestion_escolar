@@ -12,7 +12,7 @@
     </h2>
     <form {% if editar %} action="/editar_alumno" {% else %} action="/alta_alumno" {% endif %} method="post">
         <h3 class="mb-4">Información personal</h3>
-        <div class="d-flex flex-row bd-highlight mb-3 justify-content-center">
+        <div class="mb-5 d-flex flex-row bd-highlight mb-3 justify-content-center">
             <div class="mx-3">
                 <input autocomplete="off" class="form-control mx-auto w-auto" id="nombre" name="nombre" placeholder="Nombre(s)" type="text" required {% if editar or ver %} value="{{ alumno.nombre }}" {% else %} autofocus {% endif %}>
             </div>
@@ -29,14 +29,20 @@
                     <option value="no" selected>No</option>
                 </select>
             </div>
-            <div class="mb-5 mx-3">
-                <label for="estado" class="form-label">Estado</label>
-                    <select class="select form-select mx-auto w-auto" name="estado" id="estado" required>
-                        <option disabled value="">Estado</option>
-                        {% for estado in estados %}
-                            <option value="{{ estados[estado] }}" {% if estados[estado] == alumno.estado %} selected {% endif %}>{{ estado }}</option>
-                        {% endfor %}
-                </select>
+            <div class="mb-4">
+                <input type="hidden" name="estado" value="{{ alumno.estado }}">
+                <h5 class="mb-3">Estado: <span style="color:{{ colores[estados[alumno.estado]] }}; font-weight: bold;">{{ estados[alumno.estado] }}</span></h5>
+            </div>
+            <div class="btn-group mb-5">
+                <div {% if alumno.estado == 1 %} style="display:none;" {% endif %}>
+                    <button type="button" class="edit btn gris-oscuro" title="Suspender alumno" onclick="suspender('si')"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                </div>
+                <div {% if alumno.estado == 0 %} style="display:none;" {% endif %}>
+                    <button type="button" class="edit btn gris" title="Rectivar alumno" onclick="suspender('no')"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                </div>
+                <div>
+                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminar('{{ alumno.id }}', '{{ alumno.nombre }}', '{{ alumno.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
+                </div>
             </div>
         {% endif %}
         <h3 class="mb-4">Información escolar</h3>
@@ -83,6 +89,18 @@
                 <button type="submit" class="btn-big btn btn-danger mx-2" title="Cancelar"><i class="bi bi-x-circle"></i><div>Cancelar</div></button>
             </form>
         </div>
+
+
+        <!--Suspender y activar-->
+        <form id="form-suspender" action="/suspender_alumno_edicion" method="post">
+            <input type="hidden" name="id" value="{{ alumno.id }}">
+            <input type="hidden" id="suspender" name="suspender">
+        </form>
+        
+        <!--Eliminar-->
+        <form id="form-eliminar-alumno" action="/eliminar_alumno_edicion" method="post">
+            <input type="hidden" name="id" value="{{ alumno.id }}">
+        </form>
 
 
     <script>
@@ -151,6 +169,23 @@
                 }
             }
         });
+
+        // Suspender / reactivar
+        function suspender(susp) {
+            $('#suspender').val(susp);
+            $('#form-suspender').submit();
+        }
+
+        // Confirmar eliminación de usuario
+        function confirmarEliminar(idUsuario, nombre, apellidos) {
+            if (confirm(`¿Estás seguro de que deseas dar de baja a ${nombre} ${apellidos}?`)) {
+                $('#form-eliminar-alumno').submit();
+            }
+            else {
+                return false;
+            }
+        }
+
         </script>
 
 

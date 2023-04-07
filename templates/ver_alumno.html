@@ -8,7 +8,7 @@
     <h2 class="mb-5">{{ alumno.nombre }} {{ alumno.apellidos }}</h2>
     <h3 class="mb-4">Información de cuenta</h3>
     <h5 class="mb-3">Correo electrónico: {{ alumno.correo }}</h5>
-    <h5 class="mb-3">Estado: <span style="color:{{ colores[estado] }}; font-weight: bold;">{{ estado }}</span></h5>
+    <h5 class="mb-3">Estado: <span style="color:{{ colores[estados[alumno.estado]] }}; font-weight: bold;">{{ estados[alumno.estado] }}</span></h5>
     <h5 class="mb-5">Alta en sistema: {{ alumno.fecha_de_creacion.strftime('%d/%m/%Y') }}</h5>
     <h3 class="mb-3">Información escolar</h3>
     <h5 class="mb-5">{% if grupo_actual %} Grupo: {% else %} No hay grupos para mostrar {% endif %}

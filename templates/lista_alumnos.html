@@ -121,33 +121,37 @@
                         <td>
                             <div class="btn-group">
                                 <!--Suspender-->
-                                <form action="/suspender_alumno" method="post" {% if i.estado in (1,2) %} style="display:none;" {% else %} style="display:inline;" {% endif %}>
-                                    <input type="hidden" name="id" value="{{ i.id }}">
-                                    <input type="hidden" name="suspender" value="si">
-                                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
-                                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
-                                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
-                                    <input type="hidden" name="susp" value="{{ suspendidos }}">
-                                    <button type="submit" class="edit btn gris-oscuro" title="Suspender alumno"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
-                                </form>
+                                <div {% if i.estado == 1 %} style="display:none;" {% endif %}>
+                                    <form action="/suspender_alumno" method="post">
+                                        <input type="hidden" name="id" value="{{ i.id }}">
+                                        <input type="hidden" name="suspender" value="si">
+                                        <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                                        <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                                        <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                                        <input type="hidden" name="susp" value="{{ suspendidos }}">
+                                        <button type="submit" class="edit btn gris-oscuro" title="Suspender alumno"><i class="bi-small bi-person-fill-slash mx-1"></i><span class="mx-1 no-movil">Suspender</span></button>
+                                    </form>
+                                </div>
                                 <!--Activar-->
-                                <form action="/suspender_alumno" method="post" {% if i.estado in (0,2) %} style="display:none;" {% elif i.estado == 1 %} style="display:inline;" {% endif %}>
-                                    <input type="hidden" name="id" value="{{ i.id }}">
-                                    <input type="hidden" name="suspender" value="no">
-                                    <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
-                                    <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
-                                    <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
-                                    <input type="hidden" name="susp" value="{{ suspendidos }}">
-                                    <button type="submit" class="edit btn gris" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
-                                </form>
+                                <div {% if i.estado == 0 %} style="display:none;" {% endif %}>
+                                    <form action="/suspender_alumno" method="post">
+                                        <input type="hidden" name="id" value="{{ i.id }}">
+                                        <input type="hidden" name="suspender" value="no">
+                                        <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
+                                        <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
+                                        <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
+                                        <input type="hidden" name="susp" value="{{ suspendidos }}">
+                                        <button type="submit" class="edit btn gris" title="Rectivar alumno"><i class="bi-small bi bi-person-fill mx-1"></i><span class="mx-1 no-movil">Rectivar</span></button>
+                                    </form>
+                                </div>
                                 <!--Eliminar-->
-                                <form id="form-eliminar-usuario" action="/eliminar_usuario" method="post">
+                                <form id="form-eliminar-alumno" action="/eliminar_alumno" method="post">
                                     <input type="hidden" name="seleccionado" id="seleccionado">
                                     <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
                                     <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
                                     <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
                                     <input type="hidden" name="susp" value="{{ suspendidos }}">
-                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminarUsuario('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
+                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminar('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
                                 </form>
                             </div>
                         </td>
@@ -163,7 +167,7 @@
                 <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Dar de baja seleccionados"><i class="bi bi-person-dash-fill"></i><div class="mx-1 no-movil">Dar de baja seleccionados</div></button>
                 <button id="suspender-seleccionados" class="btn-big btn gris-oscuro" title="Suspender seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Suspender seleccionados</div></button>
                 <button id="reactivar-seleccionados" class="btn-big btn gris" title="Reactivar seleccionados"><i class="bi bi-person-fill"></i><div class="mx-1 no-movil">Reactivar seleccionados</div></button>
-                <form id="form-eliminar-usuarios" action="/eliminar_alumnos" method="post">
+                <form id="form-eliminar-alumnos" action="/eliminar_alumnos" method="post">
                     <input type="hidden" name="seleccionados" id="seleccionados">
                     <input type="hidden" name="accion" id="accion">
                     <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
@@ -223,7 +227,7 @@
                 if (seleccion) {
                     if (confirm("¿Estás seguro de que quieres dar de baja a los usuarios seleccionados?")) {
                         $('#accion').val("eliminar");
-                        $('#form-eliminar-usuarios').submit();
+                        $('#form-eliminar-alumnos').submit();
                     }
                 }
             });
@@ -233,7 +237,7 @@
                 // Obtener seleccionados
                 let seleccion = obtenerSeleccionados();
                 $('#accion').val("suspender");
-                $('#form-eliminar-usuarios').submit();
+                $('#form-eliminar-alumnos').submit();
             });
 
             // Reactivar seleccionados
@@ -241,7 +245,7 @@
                 // Obtener seleccionados
                 let seleccion = obtenerSeleccionados();
                 $('#accion').val("reactivar");
-                $('#form-eliminar-usuarios').submit();
+                $('#form-eliminar-alumnos').submit();
             });
 
             // Devolver alumnos de la sección
@@ -273,10 +277,10 @@
 
 
         // Confirmar eliminación de usuario
-        function confirmarEliminarUsuario(idUsuario, nombre, apellidos) {
+        function confirmarEliminar(idUsuario, nombre, apellidos) {
             if (confirm(`¿Estás seguro de que deseas dar de baja a ${nombre} ${apellidos}?`)) {
                 $('#seleccionado').val(idUsuario);
-                $('#form-eliminar-usuario').submit();
+                $('#form-eliminar-alumno').submit();
             }
             else {
                 return false;

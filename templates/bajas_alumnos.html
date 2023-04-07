@@ -73,15 +73,15 @@
         </table>
     </div>
 
-    <div class="botones-fijos">
-        <div class="btn-group">
-            <div>
-                <button id="recuperar-seleccionados" class="btn-big btn verde" title="Recuperar seleccionados"><i class="bi bi-person-dash-fill"></i><div class="mx-1 no-movil">Recuperar seleccionados</div></button>
-                <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-person-fill-slash"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
-                <form id="form-seleccionados" method="post">
-                    <input type="hidden" name="seleccionados" id="seleccionados">
-                </form>
-            </div>
+    <div class="botones-fijos d-flex justify-content-between">
+        <div>
+            <button id="eliminar-seleccionados" class="btn-big btn btn-danger" title="Eliminar seleccionados"><i class="bi bi-exclamation-triangle-fill"></i><div class="mx-1 no-movil">Eliminar seleccionados</div></button>
+        </div>
+        <div>
+            <button id="recuperar-seleccionados" class="btn-big btn verde" title="Recuperar seleccionados"><i class="bi bi-person-check-fill"></i><div class="mx-1 no-movil">Recuperar seleccionados</div></button>
+            <form id="form-seleccionados" method="post">
+                <input type="hidden" name="seleccionados" id="seleccionados">
+            </form>
         </div>
     </div>
 

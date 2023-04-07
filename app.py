@@ -1,4 +1,5 @@
 ### PENDIENTE:
+# Fusionar eliminar_alumno y suspender_alumno ya que son casi iguales
 # Dashboard
 # Subida masiva de usuarios
 # Hacer pruebas para intentar romper el programa
@@ -312,6 +313,7 @@ def editar_alumno():
         # Obtener alumno
         id_alumno = request.args.get("id")
         alumno = db.session.query(Alumnos).filter_by(id=id_alumno).first()
+        # Obtener grupo y listado de grados y grupos
         id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=alumno.id).first()
         if id_grupo:
             id_grupo = id_grupo[0]
@@ -323,25 +325,25 @@ def editar_alumno():
             grados = None
             grupos = None
         secciones = db.session.query(Grupos.seccion).distinct().all()
-        return render_template("editar_alumno.html", editar=True, active="Alumno", secciones=secciones, grados=grados, grupos=grupos, grupo_actual=grupo_actual, alumno=alumno, estados=ESTADOS)
+        return render_template("editar_alumno.html", editar=True, active="Alumno", secciones=secciones, grados=grados, grupos=grupos, grupo_actual=grupo_actual, alumno=alumno, colores=COLORES, estados=ESTADOSV)
 
 
 # Ver alumno
 @app.route('/ver_alumno')
 def ver_alumno():
     # Obtener alumno
-    id_alumno = request.args.get("id")
-    alumno = db.session.query(Alumnos).filter_by(id=id_alumno).first()
-    cambios = db.session.query(CambiosEstado).filter_by(id_alumno=id_alumno).order_by(CambiosEstado.fecha.desc()).all()
-    id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=alumno.id).first()
+    id = request.args.get("id")
+    alumno = db.session.query(Alumnos).filter_by(id=id).first()
+    # Obtener cambios
+    cambios = db.session.query(CambiosEstado).filter_by(id_alumno=id).order_by(CambiosEstado.fecha.desc()).all()
+    id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=id).first()
+    # Obtener grupo
     if id_grupo:
         id_grupo = id_grupo[0]
         grupo_actual = db.session.query(Grupos).filter_by(id=id_grupo).first()
     else:
         grupo_actual = None
-    estado = ESTADOSV[alumno.estado]
-    print(cambios)
-    return render_template("ver_alumno.html", ver=True, active="Alumno", grupo_actual=grupo_actual, alumno=alumno, estado=estado, colores=COLORES, cambios=cambios, estados=ESTADOSV)
+    return render_template("ver_alumno.html", active="Alumno", grupo_actual=grupo_actual, alumno=alumno, colores=COLORES, cambios=cambios, estados=ESTADOSV)
 
 
 # Suspender y reactivar alumno
@@ -349,13 +351,13 @@ def ver_alumno():
 def suspender_alumno():
     # Obtener usuario y grupo actual
     id = request.form.get("id")
+    alumno = Alumnos.query.get(id)
     grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
     # Verificar si se requiere consultar suspendidos y establecer el estado
     suspendidos =  request.form.get("susp")
     estados = [0, 1] if suspendidos else [0]
     # Obtener al alumno y ver si se requiere suspender o activar
     suspender = request.form.get("suspender")
-    alumno = Alumnos.query.get(id)
     estado = 1 if suspender == "si" else 0
     # Obtener las secciones
     secciones = db.session.query(Grupos.seccion).distinct().all()
@@ -373,9 +375,37 @@ def suspender_alumno():
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
-# Eliminar usuario
-@app.route('/eliminar_usuario', methods=["POST"])
-def eliminar_usuario():
+# Suspender alumno desde edición
+@app.route('/suspender_alumno_edicion', methods=["POST"])
+def suspender_alumno_edicion():
+    # Obtener al alumno y ver si se requiere suspender o activar
+    id_alumno = request.form.get("id")
+    suspender = request.form.get("suspender")
+    alumno = Alumnos.query.get(id_alumno)
+    estado = 1 if suspender == "si" else 0
+    # Suspender el alumno si existe
+    if alumno:
+        cambiar_estado_alumno(alumno, estado)
+        db.session.commit()
+        print(f"{alumno} ha sido {'suspendido' if suspender == 'si' else 'reactivado'}")
+   # Obtener grupo y listado de grados y grupos
+    id_grupo = db.session.query(alumnos_por_grupo.c.id_grupo).filter_by(id_alumno=alumno.id).first()
+    if id_grupo:
+        id_grupo = id_grupo[0]
+        grupo_actual = db.session.query(Grupos).filter_by(id=id_grupo).first()
+        grados = db.session.query(Grupos.grado).filter_by(seccion=grupo_actual.seccion).distinct().all()
+        grupos = db.session.query(Grupos.grupo).filter_by(seccion=grupo_actual.seccion, grado=grupo_actual.grado).distinct().all()
+    else:
+        grupo_actual = None
+        grados = None
+        grupos = None
+    secciones = db.session.query(Grupos.seccion).distinct().all()
+    return render_template("editar_alumno.html", editar=True, active="Alumno", secciones=secciones, grados=grados, grupos=grupos, grupo_actual=grupo_actual, alumno=alumno, colores=COLORES, estados=ESTADOSV)
+
+
+# Eliminar alumno
+@app.route('/eliminar_alumno', methods=["POST"])
+def eliminar_alumno():
     # Obtener alumno
     id = request.form.get("seleccionado")
     alumno = Alumnos.query.get(id)
@@ -398,6 +428,24 @@ def eliminar_usuario():
     else:
         lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
+
+
+# Eliminar alumno desde edición
+@app.route('/eliminar_alumno_edicion', methods=["POST"])
+def eliminar_alumno_edicion():
+    # Obtener alumno
+    id = request.form.get("id")
+    alumno = Alumnos.query.get(id)
+    # Borrar el alumno si existe
+    if alumno:
+        cambiar_estado_alumno(alumno, 2)
+        db.session.commit()
+        print(f"{alumno} ha sido dado de baja")
+    # Obtener las secciones
+    secciones = db.session.query(Grupos.seccion).distinct().all()
+    # Obtener lista de alumnos
+    lista = Alumnos.query.filter(Alumnos.estado == 0).all()
+    return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=False)
 
 
 # Recuperar alumno
