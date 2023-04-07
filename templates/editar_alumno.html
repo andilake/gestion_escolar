@@ -90,18 +90,18 @@
             </form>
         </div>
 
-
-        <!--Suspender y activar-->
-        <form id="form-suspender" action="/suspender_alumno_edicion" method="post">
-            <input type="hidden" name="id" value="{{ alumno.id }}">
-            <input type="hidden" id="suspender" name="suspender">
-        </form>
-        
-        <!--Eliminar-->
-        <form id="form-eliminar-alumno" action="/eliminar_alumno_edicion" method="post">
-            <input type="hidden" name="id" value="{{ alumno.id }}">
-        </form>
-
+        {% if editar %}
+            <!--Suspender y activar-->
+            <form id="form-suspender" action="/suspender_alumno_edicion" method="post">
+                <input type="hidden" name="id" value="{{ alumno.id }}">
+                <input type="hidden" id="suspender" name="suspender">
+            </form>
+            
+            <!--Eliminar-->
+            <form id="form-eliminar-alumno" action="/eliminar_alumno_edicion" method="post">
+                <input type="hidden" name="id" value="{{ alumno.id }}">
+            </form>
+        {% endif %}
 
     <script>
         $(document).ready(function() {
@@ -145,27 +145,30 @@
                 });
             });
 
+            
             // Detectar cambios en nombre y apellidos y mostrar bloque de actualización de correo
-            const nombreInput = document.getElementById('nombre');
-            const apellidosInput = document.getElementById('apellidos');
-            const actualizarCorreoDiv = document.getElementById('actualizar-correo');
+            if($('#nombre').val() != "") {
+                const nombreInput = document.getElementById('nombre');
+                const apellidosInput = document.getElementById('apellidos');
+                const actualizarCorreoDiv = document.getElementById('actualizar-correo');
 
-            // Guardamos el valor original del nombre y apellidos
-            let nombreOriginal = nombreInput.value;
-            let apellidosOriginal = apellidosInput.value;
+                // Guardamos el valor original del nombre y apellidos
+                let nombreOriginal = nombreInput.value;
+                let apellidosOriginal = apellidosInput.value;
 
-            // Agregamos event listeners para detectar cambios en los campos de nombre y apellidos
-            nombreInput.addEventListener('input', checkForChanges);
-            apellidosInput.addEventListener('input', checkForChanges);
+                // Agregamos event listeners para detectar cambios en los campos de nombre y apellidos
+                nombreInput.addEventListener('input', checkForChanges);
+                apellidosInput.addEventListener('input', checkForChanges);
 
-            function checkForChanges() {
-                // Comparamos el valor actual del nombre y apellidos con el valor original
-                if (nombreInput.value !== nombreOriginal || apellidosInput.value !== apellidosOriginal) {
-                    // Si hay cambios, mostramos el campo de actualización de correo
-                    actualizarCorreoDiv.style.display = 'block';
-                } else {
-                    // Si no hay cambios, ocultamos el campo de actualización de correo
-                    actualizarCorreoDiv.style.display = 'none';
+                function checkForChanges() {
+                    // Comparamos el valor actual del nombre y apellidos con el valor original
+                    if (nombreInput.value !== nombreOriginal || apellidosInput.value !== apellidosOriginal) {
+                        // Si hay cambios, mostramos el campo de actualización de correo
+                        actualizarCorreoDiv.style.display = 'block';
+                    } else {
+                        // Si no hay cambios, ocultamos el campo de actualización de correo
+                        actualizarCorreoDiv.style.display = 'none';
+                    }
                 }
             }
         });

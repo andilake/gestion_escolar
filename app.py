@@ -411,7 +411,7 @@ def eliminar_alumno():
     # Obtener el grupo actual
     grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
     # Verificar si se requiere consultar suspendidos y establecer el estado
-    suspendidos =  request.form.get("susp")
+    suspendidos =  True if request.form.get("susp") == "True" else False
     estados = [0, 1] if suspendidos else [0]
     # Obtener las secciones
     secciones = db.session.query(Grupos.seccion).distinct().all()
