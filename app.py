@@ -3,8 +3,6 @@
 # Dashboard
 # Subida masiva de usuarios
 # Hacer pruebas para intentar romper el programa
-# Recuperar eliminados seleccionados
-# Hacer el filtro por grupo desde lista de alumnos, hacer que obtenga la sección, grado y grupo desde el formulario y que vuelva a recargarse cada que seleccione un grupo nuevo
 # Agregar login
 ## Versión 2:
 # Agregar maestros
@@ -354,7 +352,8 @@ def suspender_alumno():
     alumno = Alumnos.query.get(id)
     grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
     # Verificar si se requiere consultar suspendidos y establecer el estado
-    suspendidos =  request.form.get("susp")
+    suspendidos =  True if request.form.get("susp") == "True" else False
+    print(type(suspendidos))
     estados = [0, 1] if suspendidos else [0]
     # Obtener al alumno y ver si se requiere suspender o activar
     suspender = request.form.get("suspender")
@@ -369,7 +368,7 @@ def suspender_alumno():
     # Obtener lista de alumnos
     datos = consultar_alumnos(grupo_actual, suspendidos, estados)
     if datos:        
-        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=False)
     else:
         lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
