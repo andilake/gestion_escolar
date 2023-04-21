@@ -84,6 +84,9 @@
                 <tr>
                     <th data-field="state" data-checkbox="true"></th>
                     <th data-sortable="true" scope="col" data-visible="false" >ID</th>
+                    <th data-sortable="true" scope="col">Sección</th>
+                    <th data-sortable="true" scope="col">Grado</th>
+                    <th data-sortable="true" scope="col">Grupo</th>
                     <th data-sortable="true" scope="col">Nombre(s)</th>
                     <th data-sortable="true" scope="col">Apellidos</th>
                     <th data-sortable="true" scope="col">Correo electrónico</th>
@@ -96,34 +99,37 @@
             </thead>
             <tbody id="tbody">
                 {% for i in lista %}
-                    <tr {% if i.estado == 1 %} class="suspendido" {% endif %}>
+                    <tr {% if i[0].estado == 1 %} class="suspendido" {% endif %}>
                         <td></td>
-                        <td>{{ i.id }}</td>
-                        <td >{{ i.nombre }}</td>
-                        <td>{{ i.apellidos }}</td>
-                        <td>{{ i.correo }}</td>
-                        <td>{{ estados[i.estado] }}</td>
-                        <td>{{ i.fecha_de_creacion.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ i[0].id }}</td>
+                        <td>{{ i[1].seccion }}</td>
+                        <td>{{ i[1].grado }}</td>
+                        <td>{{ i[1].grupo }}</td>
+                        <td >{{ i[0].nombre }}</td>
+                        <td>{{ i[0].apellidos }}</td>
+                        <td>{{ i[0].correo }}</td>
+                        <td>{{ estados[i[0].estado] }}</td>
+                        <td>{{ i[0].fecha_de_creacion.strftime('%d/%m/%Y') }}</td>
                         <td>
                             <!--Ver-->
                             <form action="/ver_alumno" method="get">
-                                <input type="hidden" name="id" value="{{ i.id }}">
+                                <input type="hidden" name="id" value="{{ i[0].id }}">
                                 <button type="submit" class="edit btn ver" title="Ver alumno"><i class="bi-small bi bi-person-vcard-fill mx-1"></i><span class="mx-1 no-movil">Ver</span></button>
                             </form>
                         </td>
                         <td>
                             <!--Editar-->
                             <form action="/editar_alumno" method="get">
-                                <input type="hidden" name="id" value="{{ i.id }}">
+                                <input type="hidden" name="id" value="{{ i[0].id }}">
                                 <button type="submit" class="edit btn color-primario" title="Editar alumno"><i class="bi-small bi bi-person-fill-gear mx-1"></i><span class="mx-1 no-movil">Editar</span></button>
                             </form>
                         </td>
                         <td>
                             <div class="btn-group">
                                 <!--Suspender-->
-                                <div {% if i.estado == 1 %} style="display:none;" {% endif %}>
+                                <div {% if i[0].estado == 1 %} style="display:none;" {% endif %}>
                                     <form action="/suspender_alumno" method="post">
-                                        <input type="hidden" name="id" value="{{ i.id }}">
+                                        <input type="hidden" name="id" value="{{ i[0].id }}">
                                         <input type="hidden" name="suspender" value="si">
                                         <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
                                         <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
@@ -133,9 +139,9 @@
                                     </form>
                                 </div>
                                 <!--Activar-->
-                                <div {% if i.estado == 0 %} style="display:none;" {% endif %}>
+                                <div {% if i[0].estado == 0 %} style="display:none;" {% endif %}>
                                     <form action="/suspender_alumno" method="post">
-                                        <input type="hidden" name="id" value="{{ i.id }}">
+                                        <input type="hidden" name="id" value="{{ i[0].id }}">
                                         <input type="hidden" name="suspender" value="no">
                                         <input type="hidden" name="ga_seccion" value="{{ grupo_actual.seccion }}">
                                         <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
@@ -151,7 +157,7 @@
                                     <input type="hidden" name="ga_grado" value="{{ grupo_actual.grado }}">
                                     <input type="hidden" name="ga_grupo" value="{{ grupo_actual.grupo }}">
                                     <input type="hidden" name="susp" value="{{ suspendidos }}">
-                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminar('{{ i.id }}', '{{ i.nombre }}', '{{ i.apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
+                                    <button type="button" class="edit btn btn-danger" title="Eliminar alumno" onclick="confirmarEliminar('{{ i[0].id }}', '{{ i[0].nombre }}', '{{ i[0].apellidos }}')"><i class="bi-small bi bi-person-dash-fill mx-1"></i><span class="mx-1 no-movil">Baja</span></button>
                                 </form>
                             </div>
                         </td>

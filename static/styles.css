@@ -177,7 +177,7 @@ input {
     margin: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
     .no-movil {
         display: none;
     }

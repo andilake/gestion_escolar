@@ -175,7 +175,12 @@ def consultar_alumnos(grupo_actual, suspendidos, estado):
     for i in query_alumnos:
         ids_alumno.append(i[0])
     # Obtener alumnos
-    lista = Alumnos.query.filter(Alumnos.id.in_(ids_alumno), Alumnos.estado.in_(estado)).all()
+    lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.id.in_(ids_alumno), Alumnos.estado.in_(estado))\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
     datos = {'lista': lista, 'grados': grados, 'grupos': grupos}
     return datos
 
@@ -204,13 +209,23 @@ def lista_alumnos():
         if datos:        
             return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
         else:
-            lista = Alumnos.query.filter(Alumnos.estado.in_(estado)).all()
+            lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado.in_(estado))\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
             return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
     else:
         # Mostrar todos los alumnos activos
         estado = 0
-        lista = Alumnos.query.filter(Alumnos.estado == estado).all()
+        lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado == estado)\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
         secciones = db.session.query(Grupos.seccion).distinct().all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None)
 
@@ -353,7 +368,6 @@ def suspender_alumno():
     grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
     # Verificar si se requiere consultar suspendidos y establecer el estado
     suspendidos =  True if request.form.get("susp") == "True" else False
-    print(type(suspendidos))
     estados = [0, 1] if suspendidos else [0]
     # Obtener al alumno y ver si se requiere suspender o activar
     suspender = request.form.get("suspender")
@@ -368,9 +382,14 @@ def suspender_alumno():
     # Obtener lista de alumnos
     datos = consultar_alumnos(grupo_actual, suspendidos, estados)
     if datos:        
-        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=False)
+        return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
-        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado.in_(estados))\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
@@ -425,7 +444,12 @@ def eliminar_alumno():
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
-        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado.in_(estados))\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
@@ -443,7 +467,13 @@ def eliminar_alumno_edicion():
     # Obtener las secciones
     secciones = db.session.query(Grupos.seccion).distinct().all()
     # Obtener lista de alumnos
-    lista = Alumnos.query.filter(Alumnos.estado == 0).all()
+    estado = 0
+    lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado == estado)\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
     return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=False)
 
 
@@ -505,7 +535,12 @@ def eliminar_alumnos():
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
-        lista = Alumnos.query.filter(Alumnos.estado.in_(estados)).all()
+        lista = db.session.query(Alumnos, Grupos)\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado.in_(estados))\
+                        .order_by(Alumnos.apellidos)\
+                        .all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None, suspendidos=suspendidos)
 
 
@@ -626,7 +661,6 @@ def alumnos_seccion():
     opciones = '<option selected value="">Grado</option>'
     for grado in grados:
         opciones += '<option value="' + str(grado) + '">' + str(grado) + '</option>'
-    print(lista)
     return jsonify({'grados': opciones, 'lista': lista})
 
 # python
