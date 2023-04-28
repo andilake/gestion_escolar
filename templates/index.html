@@ -3,3 +3,100 @@
 {% block title %}
     Sistema de Control de Usuarios
 {% endblock %}
+
+
+{% block main %}
+<div class="d-flex justify-content-evenly">
+  <div class="card m-4">
+    <h5 class="card-header">Alumnos por sección</h5>
+    <div class="canvas p-4">
+      <canvas id="secciones"></canvas>
+    </div>
+  </div>
+
+  <div class="card m-4">
+    <h5 class="card-header">Total de alumnos por fecha</h5>
+    <div class="canvas p-4">
+      <canvas id="fechas"></canvas>
+    </div>
+  </div>
+</div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    const secciones = JSON.parse('{{ secciones|safe }}');
+    const datos_secciones = JSON.parse('{{ datos_secciones|safe }}')
+    const fechas = JSON.parse('{{ fechas|safe }}');
+    const datos_fechas = JSON.parse('{{ datos_fechas|safe }}')
+    const color1 = 'rgba(117, 167, 250, ';
+    const color2 = 'rgba(65, 71, 86, ';
+    const color3 = 'rgba(165, 171, 189, ';
+    const color4 = 'rgba(246, 131, 157, ';
+    const color5 = 'rgba(187, 78, 106, ';
+    console.log(secciones);
+    const aps = document.getElementById('secciones');
+    const tpf = document.getElementById('fechas');
+    new Chart(aps, {
+      type: 'doughnut',
+      data: {
+        labels: secciones,
+        datasets: [{
+          label: 'Alumnos por sección',
+          data: datos_secciones,
+          backgroundColor: [
+            color1 + '0.8)',
+            color2 + '0.8)',
+            color3 + '0.8)',
+            color4 + '0.8)',
+            color5 + '0.8)',
+          ],
+          borderColor: [
+            color1 + '1)',
+            color2 + '1)',
+            color3 + '1)',
+            color4 + '1)',
+            color5 + '1)',
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        legend: {
+          position: 'bottom',
+        },
+        title: {
+          display: true,
+          text: 'Alumnos por sección'
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true
+        }
+      }
+    });
+    new Chart(tpf, {
+      type: 'line',
+      data: {
+        labels: fechas,
+        datasets: [{
+          label: 'Alumnos',
+          data: datos_fechas,
+          fill: false,
+          borderColor: color4 + '1)',
+          pointBackgroundColor: color5 + '1)',
+          tension: 0.1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  </script>
+
+{% endblock %}

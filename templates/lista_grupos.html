@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+    Lista de grupos
+{% endblock %}
+
+
+{% block main %}
+
+    <h2 class="mb-5">
+        Lista de grupos
+    </h2>
+
+    <ul class="list-group list-group-flush">
+        {% for seccion in secciones %}
+            <li class="list-group-item"><h3>{{ seccion }}:</h3></li>
+            {% for grupo in grupos %}
+                {% if grupo.seccion == seccion and grupo.grupo %}<li class="list-group-item">{{ grupo }}</li>{% endif %}
+            {% endfor %}
+        {% endfor %}
+    </ul>
+
+{% endblock %}
