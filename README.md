@@ -1,7 +1,3 @@
-# Web based student management system
-
-### Video Demo:  <https://youtu.be/lunJ4meE8v4>
-
 ### Default admin login:
 Username: admin@colegionuevo.com
 Password: 123456
