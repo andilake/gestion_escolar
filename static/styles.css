@@ -185,4 +185,8 @@ input {
     .movil {
         display: inline;
     }
+    .navbar-collapse {
+        padding-left: 10px;
+        margin-right: 10px;        
+    }
 }

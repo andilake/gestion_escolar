@@ -1,14 +1,3 @@
-### PENDIENTE:
-# Apellidos compuestos hacer que se incluyan en el nombre, si el apellido empieza con de o con de la (puedo buscar estas palabras en el apellido o contar si son menos de 3 letras)
-# Subida masiva de usuarios
-# Hacer pruebas para intentar romper el programa
-# Agregar login
-## Versión 2:
-# Agregar maestros
-# Agregar papás
-# Agregar botón para descargar en formato moodle
-
-
 ## LIBRERÍAS ##
 
 from datetime import datetime
@@ -37,8 +26,8 @@ ADMPASS = "123456"
 ## CONFIGURACIONES ##
 
 # Configuración para desarrollo
-os.environ['FLASK_ENV'] = 'development'
-os.environ['FLASK_DEBUG'] = '1'
+# os.environ['FLASK_ENV'] = 'development'
+# os.environ['FLASK_DEBUG'] = '1'
 
 # Configurar aplicación
 app = Flask(__name__)
