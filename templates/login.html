@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Iniciar sesión
+{% endblock %}
+
+
+{% block main %}
+
+<form action="/login" method="post">
+    <div class="mb-3">
+        <input autocomplete="off" autofocus class="form-control mx-auto w-auto" required id="user" name="user" placeholder="Correo electrónico" type="email">
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" required id="password" name="password" placeholder="Contraseña" type="password">
+    </div>
+    <button class="btn color-primario" type="submit">Iniciar sesión</button>
+</form>
+{% endblock %}

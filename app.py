@@ -1,6 +1,5 @@
 ### PENDIENTE:
-# Fusionar eliminar_alumno y suspender_alumno ya que son casi iguales
-# Dashboard
+# Apellidos compuestos hacer que se incluyan en el nombre, si el apellido empieza con de o con de la (puedo buscar estas palabras en el apellido o contar si son menos de 3 letras)
 # Subida masiva de usuarios
 # Hacer pruebas para intentar romper el programa
 # Agregar login
@@ -10,31 +9,48 @@
 # Agregar botón para descargar en formato moodle
 
 
-# Importar librerías
+## LIBRERÍAS ##
+
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, session, jsonify
+from flask import flash, Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
+from sqlalchemy import func
+from werkzeug.security import check_password_hash, generate_password_hash
 import json
+import os
 import unicodedata
 
-# Configurar aplicación
-app = Flask(__name__)
 
-# Constantes
+## CONSTANTES ##
+
 DOMINIO = 'colegionuevo.com'
 SECCIONES = ["Maternal", "Kinder", "Primaria", "Secundaria", "Preparatoria"]
 GRUPOS = ["A", "B", "C", "D", "E", "F", "H", "I", "Q"]
 ESTADOS = {"Activo" : 0, "Suspendido" : 1, "Baja" : 2}
 ESTADOSV = {v: k for k, v in ESTADOS.items()}
 COLORES = {"Activo": "#729869", "Suspendido": "#D69900", "Baja": "#DC3545"}
+ADMPASS = "123456"
 
 
-# Configurar sesión
+## CONFIGURACIONES ##
+
+# Configuración para desarrollo
+os.environ['FLASK_ENV'] = 'development'
+os.environ['FLASK_DEBUG'] = '1'
+
+# Configurar aplicación
+app = Flask(__name__)
+app.config['SECRET_KEY'] = '12345'
+
 # Cerrar sesión al cerrar el navegador
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+
+
+## BASES DE DATOS ##
 
 # Configurar base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///usuarios.db'
@@ -61,6 +77,26 @@ class Alumnos(db.Model):
         return {'id': self.id, 'nombre': self.nombre, 'apellidos': self.nombre, 'correo': self.correo, 'estado': ESTADOSV[self.estado], 'estado_num': self.estado, 'fecha_de_creacion': self.fecha_de_creacion}
 
 
+# Tabla de administradores
+class Admins(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario = db.Column(db.String(50), nullable=False)
+    nombre = db.Column(db.String(50), nullable=False)
+    apellidos = db.Column(db.String(50), nullable=False)
+    correo = db.Column(db.String(50), nullable=False, unique=True)
+    hash = db.Column(db.String(50), nullable=False)
+
+    def __init__(self, usuario, nombre, apellidos, correo, hash):
+        self.usuario = usuario
+        self.nombre = nombre
+        self.apellidos = apellidos
+        self.correo = correo
+        self.hash = hash
+
+    def __repr__(self):
+        return f"<Usuario {self.id}: {self.usuario} - {self.nombre} {self.apellidos}>"
+    
+
 # Tabla de grupos
 class Grupos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +110,7 @@ class Grupos(db.Model):
         self.grupo = grupo
 
     def __repr__(self):
-       return f"<{self.grado}°{self.grupo} de {self.seccion}>"
+       return f"{self.grado}°{self.grupo} de {self.seccion}"
 
 
 # Alumnos por grupo
@@ -84,7 +120,7 @@ alumnos_por_grupo = db.Table('alumnos_por_grupo',
 )
 
 
-# Log de altas y bajas
+# Cambios de estado
 class CambiosEstado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     id_alumno = db.Column(db.Integer, db.ForeignKey('alumnos.id'), nullable=False)
@@ -100,11 +136,68 @@ class CambiosEstado(db.Model):
     def __repr__(self):
         return f'<Alumno: {self.id_alumno} cambió de {self.estado_anterior} a {self.estado_nuevo} el día {self.fecha}>'
 
+# Log de altas y bajas
+class Totales(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.DateTime, nullable=False)
+    total = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, fecha, total):
+        self.fecha = fecha
+        self.total = total
+
+    def __repr__(self):
+        return f'<{self.fecha.strftime("%d/%m/%Y")}: {self.total} alumnos inscritos>'
+
+
+## EJECUCIÓN DE LA APLICACIÓN ##
 
 # Crear la base de datos si no existe al correr la aplicación:
 with app.app_context():
     db.create_all()
     db.session.commit()
+    # Revisar si la tabla de totales está vacía por fecha y si no, crear el total inicial
+    if len(Totales.query.all()) == 0:
+        total = 0
+        fechas = []
+        query = db.session.query(func.date(Alumnos.fecha_de_creacion), func.count(Alumnos.id)) \
+                .filter(Alumnos.estado.in_([0, 1])) \
+                .group_by(func.date(Alumnos.fecha_de_creacion)) \
+                .all()
+        for i in query:
+            total += i[1]
+            fecha = datetime.strptime(i[0], '%Y-%m-%d').date()
+            nuevo = Totales(fecha, total)
+            db.session.add(nuevo)
+        db.session.commit()
+    # Crear admin si no existe al correr la aplicación
+    if len(Admins.query.all()) == 0:
+        nombre = "Admin"
+        apellidos = "Adm"
+        correo = "admin@" + DOMINIO
+        hash = generate_password_hash(ADMPASS)
+        usuario = "admin"
+        admin = Admins(usuario, nombre, apellidos, correo, hash)
+        db.session.add(admin)
+        db.session.commit()
+
+
+## FUNCIONES ##
+
+# Función para agregar al log de altas y bajas
+def alta_log(alta):
+    totales = db.session.query(func.date(Totales.fecha), Totales.total, Totales.id).order_by(Totales.fecha.desc()).first()
+    hoy = datetime.utcnow().strftime('%Y-%m-%d')
+    total = (totales.total + 1) if alta else (totales.total - 1)
+    if totales[0] == hoy:
+        q = Totales.query.filter_by(id=totales.id).first()
+        q.total = total
+    else:
+        fecha = datetime.strptime(hoy, '%Y-%m-%d').date()
+        nuevo = Totales(fecha, total)
+        db.session.add(nuevo)
+    db.session.commit()
+    return
 
 
 # Función para cambio de estado
@@ -143,7 +236,8 @@ def crear_correo(nombre, apellidos):
     return correo
 
 
-def consultar_alumnos(grupo_actual, suspendidos, estado):
+# Función para consultar alumnos
+def consultar_alumnos(grupo_actual, estado):
     # Verificar si se seleccionó una sección, si no, mostrar todos los alumnos
     if grupo_actual["seccion"] == "":
         return None
@@ -185,14 +279,96 @@ def consultar_alumnos(grupo_actual, suspendidos, estado):
     return datos
 
 
+# Función para requerir inicio de sesión
+def login_required(f):
+    """
+    Decorate routes to require login.
+
+    https://flask.palletsprojects.com/en/1.1.x/patterns/viewdecorators/
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+## PÁGINAS ##
+
 # Página de inicio
 @app.route("/")
+@login_required
 def index():
-    return render_template("index.html", active="Inicio")
+    secciones = []
+    datos_secciones = []
+    fechas = []
+    datos_fechas = []
+    # Obtener alumnos por sección
+    query = db.session.query(Grupos.seccion, func.count(Alumnos.id))\
+                        .join(alumnos_por_grupo, Alumnos.id == alumnos_por_grupo.c.id_alumno)\
+                        .join(Grupos, Grupos.id == alumnos_por_grupo.c.id_grupo)\
+                        .filter(Alumnos.estado.in_([0,1]))\
+                        .group_by(Grupos.seccion)\
+                        .order_by(Grupos.id)\
+                        .all()
+    for i in query:
+        secciones.append(i[0])
+        datos_secciones.append(i[1])
+    totales = db.session.query(func.date(Totales.fecha), Totales.total).order_by(Totales.fecha).all()
+    # Obtener totales por fecha
+    for total in totales:
+        fechas.append(total[0])
+        datos_fechas.append(total[1])
+    secciones_json = json.dumps(secciones)
+    datos_secciones_json = json.dumps(datos_secciones)
+    fechas_json = json.dumps(fechas)
+    datos_fechas_json = json.dumps(datos_fechas)
+    return render_template("index.html", active="Inicio", secciones=secciones_json, datos_secciones=datos_secciones_json, fechas=fechas_json, datos_fechas=datos_fechas_json)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+        # Borrar el user_id si existe
+        session.clear()
+        user = request.form.get("user")
+        password = request.form.get("password")
+        # Revisar que se introdujo nombre de usuario y contraseña
+        if not user or not password:
+            flash("Error al iniciar sesión")
+            return redirect(url_for("login")) 
+        # Buscar el usuario
+        usuario = db.session.query(Admins).filter_by(correo=user).first()
+        # Si el usuario existe, revisar si la contraseña es correcta
+        if not usuario or not check_password_hash(usuario.hash, password):
+            flash("Nombre de usuario o contraseña incorrectos")
+            return redirect(url_for("login")) 
+
+        # Recordar usuario
+        session["user_id"] = usuario.id
+
+        # Redirigin al usuario a la página de inicio
+        return redirect("/")
+
+    else:
+        return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    return redirect("/")
 
 
 # Ver alumnos
 @app.route("/lista_alumnos", methods=["GET", "POST"])
+@login_required
 def lista_alumnos():
     if request.method == "POST":
         grupo_actual = {}
@@ -205,7 +381,7 @@ def lista_alumnos():
         estado = [0, 1] if suspendidos else [0]
         # Obtener las secciones
         secciones = db.session.query(Grupos.seccion).distinct().all()
-        datos = consultar_alumnos(grupo_actual, suspendidos,estado)
+        datos = consultar_alumnos(grupo_actual, estado)
         if datos:        
             return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
         else:
@@ -226,12 +402,14 @@ def lista_alumnos():
                         .filter(Alumnos.estado == estado)\
                         .order_by(Alumnos.apellidos)\
                         .all()
+        print(lista)
         secciones = db.session.query(Grupos.seccion).distinct().all()
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=lista, estados=ESTADOSV, grupo_actual=None, secciones=secciones, grados=None, grupos=None)
 
 
 # Alumno nuevo
 @app.route("/alta_alumno", methods=["GET", "POST"])
+@login_required
 def alta_alumno():
 
     if request.method == "POST":
@@ -246,6 +424,8 @@ def alta_alumno():
         alumno = Alumnos(nombre, apellidos, correo)
         db.session.add(alumno)
         db.session.commit()
+        # Actualizar log de altas y bajas
+        alta_log(True)
         # Obtener id de grupo y alumno
         id_grupo = db.session.query(Grupos.id).filter_by(seccion=seccion, grado=grado, grupo=grupo).first()
         id_alumno = db.session.query(Alumnos.id).filter_by(correo=correo).first()[0]
@@ -263,6 +443,7 @@ def alta_alumno():
 
 
 @app.route("/bajas_alumnos")
+@login_required
 def bajas_alumnos():
     # Obtener última fecha de eliminación
     subconsulta = db.session.query(CambiosEstado.id_alumno, db.func.max(CambiosEstado.fecha).label('max_fecha'))\
@@ -281,6 +462,7 @@ def bajas_alumnos():
 
 # Editar alumno
 @app.route("/editar_alumno", methods=["GET","POST"])
+@login_required
 def editar_alumno():
     if request.method == "POST":
         # Obtener datos de alumno
@@ -343,6 +525,7 @@ def editar_alumno():
 
 # Ver alumno
 @app.route('/ver_alumno')
+@login_required
 def ver_alumno():
     # Obtener alumno
     id = request.args.get("id")
@@ -361,6 +544,7 @@ def ver_alumno():
 
 # Suspender y reactivar alumno
 @app.route('/suspender_alumno', methods=["POST"])
+@login_required
 def suspender_alumno():
     # Obtener usuario y grupo actual
     id = request.form.get("id")
@@ -380,7 +564,7 @@ def suspender_alumno():
         db.session.commit()
         print(f"{alumno} ha sido {'suspendido' if suspender == 'si' else 'reactivado'}")
     # Obtener lista de alumnos
-    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    datos = consultar_alumnos(grupo_actual, estados)
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
@@ -395,6 +579,7 @@ def suspender_alumno():
 
 # Suspender alumno desde edición
 @app.route('/suspender_alumno_edicion', methods=["POST"])
+@login_required
 def suspender_alumno_edicion():
     # Obtener al alumno y ver si se requiere suspender o activar
     id_alumno = request.form.get("id")
@@ -423,6 +608,7 @@ def suspender_alumno_edicion():
 
 # Eliminar alumno
 @app.route('/eliminar_alumno', methods=["POST"])
+@login_required
 def eliminar_alumno():
     # Obtener alumno
     id = request.form.get("seleccionado")
@@ -438,9 +624,11 @@ def eliminar_alumno():
     if alumno:
         cambiar_estado_alumno(alumno, 2)
         db.session.commit()
+        # Actualizar log de altas y bajas
+        alta_log(False)
         print(f"{alumno} ha sido dado de baja")
     # Obtener lista de alumnos
-    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    datos = consultar_alumnos(grupo_actual, estados)
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
@@ -455,6 +643,7 @@ def eliminar_alumno():
 
 # Eliminar alumno desde edición
 @app.route('/eliminar_alumno_edicion', methods=["POST"])
+@login_required
 def eliminar_alumno_edicion():
     # Obtener alumno
     id = request.form.get("id")
@@ -463,6 +652,10 @@ def eliminar_alumno_edicion():
     if alumno:
         cambiar_estado_alumno(alumno, 2)
         db.session.commit()
+        # Actualizar log de altas y bajas
+        alta_log(False)
+        # Actualizar log de altas y bajas
+        alta_log(False)
         print(f"{alumno} ha sido dado de baja")
     # Obtener las secciones
     secciones = db.session.query(Grupos.seccion).distinct().all()
@@ -479,6 +672,7 @@ def eliminar_alumno_edicion():
 
 # Recuperar alumno
 @app.route('/recuperar_alumno', methods=["POST"])
+@login_required
 def recuperar_alumno():
     # Obtener alumno
     id = request.form.get("id")
@@ -486,12 +680,16 @@ def recuperar_alumno():
     if alumno:
         cambiar_estado_alumno(alumno, 0)
         db.session.commit()
+        # Actualizar log de altas y bajas
+        alta_log(True)
         print(f"{alumno} ha sido recuperado")
     # Obtener lista de alumnos
     return redirect("/bajas_alumnos")
 
+
 # Eliminar alumno permanentemente
 @app.route('/eliminar_permanentemente', methods=["POST"])
+@login_required
 def eliminar_permanentemente():
     # Obtener usuario
     id = request.form.get("seleccionado")
@@ -508,6 +706,7 @@ def eliminar_permanentemente():
 
 # Eliminar o suspender múltiples alumnos
 @app.route('/eliminar_alumnos', methods=["POST"])
+@login_required
 def eliminar_alumnos():
     # Obtener ids alumnos y convertirlas a entero
     ids_alumnos = json.loads(request.form.get("seleccionados"))
@@ -515,7 +714,7 @@ def eliminar_alumnos():
     # Obtener grupo actual
     grupo_actual = {'seccion': request.form.get("ga_seccion"), 'grado': request.form.get("ga_grado"), 'grupo': request.form.get("ga_grupo")}
     # Verificar si se requiere consultar suspendidos y establecer el estado
-    suspendidos =  request.form.get("susp")
+    suspendidos =  True if request.form.get("susp") == "True" else False
     estados = [0, 1] if suspendidos else [0]
     # Revisar si se tienen que suspender, eliminar o activar 
     accion = request.form.get("accion")
@@ -529,9 +728,12 @@ def eliminar_alumnos():
         if alumno:
             cambiar_estado_alumno(alumno, estado)
             db.session.commit()
+            if accion == "eliminar":
+                # Actualizar log de altas y bajas
+                alta_log(False)
             print(f"{alumno} ha sido {texto}")
     # Obtener lista de alumnos
-    datos = consultar_alumnos(grupo_actual, suspendidos, estados)
+    datos = consultar_alumnos(grupo_actual, estados)
     if datos:        
         return render_template("lista_alumnos.html", active="Lista de alumnos", lista=datos['lista'] , estados=ESTADOSV, grupo_actual=grupo_actual, secciones=secciones, grados=datos['grados'], grupos=datos['grupos'], suspendidos=suspendidos)
     else:
@@ -546,6 +748,7 @@ def eliminar_alumnos():
 
 # Eliminar varios alumnos permanentemente
 @app.route('/eliminar_alumnos_permanentemente', methods=["POST"])
+@login_required
 def eliminar_alumnos_permanentemente():
     # Obtener ids alumnos y convertirlas a entero
     ids_alumnos = json.loads(request.form.get("seleccionados"))
@@ -564,6 +767,7 @@ def eliminar_alumnos_permanentemente():
 
 # Recuperar varios alumnos
 @app.route('/recuperar_alumnos', methods=["POST"])
+@login_required
 def recuperar_alumnos():
     # Obtener ids alumnos y convertirlas a entero
     ids_alumnos = json.loads(request.form.get("seleccionados"))
@@ -574,12 +778,15 @@ def recuperar_alumnos():
         if alumno:
             cambiar_estado_alumno(alumno, 0)
             db.session.commit()
+            # Actualizar log de altas y bajas
+            alta_log(True)
             print(f"{alumno} ha sido recuperado")
     return redirect("/bajas_alumnos")
 
 
 # Grupo nuevo
 @app.route("/nuevo_grupo", methods=["GET", "POST"])
+@login_required
 def nuevo_grupo():
 
     if request.method == "POST":
@@ -603,6 +810,13 @@ def nuevo_grupo():
         return render_template("nuevo_grupo.html", active="Nuevo grupo", secciones=SECCIONES, grupos=GRUPOS)
 
 
+# Lista de grupos
+@app.route("/lista_grupos")
+@login_required
+def lista_grupos():
+    grupos = db.session.query(Grupos).all()
+    return render_template("lista_grupos.html", active="Lista de grupos", grupos=grupos, secciones=SECCIONES)
+
 # Rellenar grado
 @app.route('/grados', methods=['POST'])
 def grados():
@@ -622,6 +836,7 @@ def grados():
 
 # Rellenar grupo
 @app.route('/grupos', methods=['POST'])
+@login_required
 def grupos():
     seccion = request.form.get('seccion')
     grado = request.form.get('grado')
@@ -637,6 +852,7 @@ def grupos():
 
 # Obtener alumnos de la seccion
 @app.route('/alumnos_seccion', methods=['POST'])
+@login_required
 def alumnos_seccion():
     # Obtener la seccion
     seccion = request.form.get('seccion')

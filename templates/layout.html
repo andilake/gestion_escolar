@@ -46,38 +46,51 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse color-primario" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link {% if active=='Inicio' %} active {% endif %}" aria-current="page" href="/">Inicio</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active in ['Lista de alumnos', 'Alta alumno', 'Alumno', 'Bajas alumnos'] %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Alumnos
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end color-primario" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item color-primario {% if active=='Lista de alumnos' %} active {% endif %}" href="/lista_alumnos">Lista de alumnos</a></li>
-                        <li><hr class="dropdown-divider color-primario"></li>
-                        <li><a class="dropdown-item color-primario {% if active=='Alta alumno' %} active {% endif %}" href="/alta_alumno">Alta alumno</a></li>
-                        <li><hr class="dropdown-divider color-primario"></li>
-                        <li><a class="dropdown-item color-primario {% if active=='Bajas alumnos' %} active {% endif %}" href="/bajas_alumnos">Bajas</a></li>
+                    {% if session["user_id"] %}
+                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link {% if active=='Inicio' %} active {% endif %}" aria-current="page" href="/">Inicio</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {% if active in ['Lista de alumnos', 'Alta alumno', 'Alumno', 'Bajas alumnos'] %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Alumnos
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end color-primario" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item color-primario {% if active=='Lista de alumnos' %} active {% endif %}" href="/lista_alumnos">Lista de alumnos</a></li>
+                                <li><hr class="dropdown-divider color-primario"></li>
+                                <li><a class="dropdown-item color-primario {% if active=='Alta alumno' %} active {% endif %}" href="/alta_alumno">Alta alumno</a></li>
+                                <li><hr class="dropdown-divider color-primario"></li>
+                                <li><a class="dropdown-item color-primario {% if active=='Bajas alumnos' %} active {% endif %}" href="/bajas_alumnos">Bajas</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {% if active in ['Lista de grupos', 'Nuevo grupo'] %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Grupos
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end color-primario" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item color-primario {% if active=='Lista de grupos' %} active {% endif %}" href="/lista_grupos">Lista de grupos</a></li>
+                                <li><hr class="dropdown-divider color-primario"></li>
+                                <li><a class="dropdown-item color-primario {% if active=='Nuevo grupo' %} active {% endif %}" href="/nuevo_grupo">Nuevo grupo</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" aria-current="page" href="/logout">Cerrar sesión</a>
+                            </li>
                         </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active in ['Lista de grupos', 'Nuevo grupo'] %} active {% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Grupos
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end color-primario" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item color-primario {% if active=='Lista de grupos' %} active {% endif %}" href="/lista_grupos">Lista de grupos</a></li>
-                        <li><hr class="dropdown-divider color-primario"></li>
-                        <li><a class="dropdown-item color-primario {% if active=='Nuevo grupo' %} active {% endif %}" href="/nuevo_grupo">Nuevo grupo</a></li>
-                        </ul>
-                    </li>
-                    </ul>
+                    {% endif %}
                 </div>
             </div>
-          </nav>
+        </nav>
 
-          <main class="container-fluid py-5 text-center">
+        {% if get_flashed_messages() %}
+            <header>
+                <div class="alert alert-primary mb-0 text-center" role="alert">
+                    {{ get_flashed_messages() | join(" ") }}
+                </div>
+            </header>
+        {% endif %}
+
+        <main class="container-fluid py-5 text-center">
             {% block main %}{% endblock %}
         </main>
 

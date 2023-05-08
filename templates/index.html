@@ -29,11 +29,11 @@
     const datos_secciones = JSON.parse('{{ datos_secciones|safe }}')
     const fechas = JSON.parse('{{ fechas|safe }}');
     const datos_fechas = JSON.parse('{{ datos_fechas|safe }}')
-    const color1 = 'rgba(117, 167, 250, ';
-    const color2 = 'rgba(65, 71, 86, ';
-    const color3 = 'rgba(165, 171, 189, ';
-    const color4 = 'rgba(246, 131, 157, ';
-    const color5 = 'rgba(187, 78, 106, ';
+    const color1 = 'rgba(249, 248, 113, ';
+    const color2 = 'rgba(141, 218, 129, ';
+    const color3 = 'rgba(40, 179, 147, ';
+    const color4 = 'rgba(0, 134, 143, ';
+    const color5 = 'rgba(29, 90, 113, ';
     console.log(secciones);
     const aps = document.getElementById('secciones');
     const tpf = document.getElementById('fechas');
@@ -84,8 +84,8 @@
           label: 'Alumnos',
           data: datos_fechas,
           fill: false,
-          borderColor: color4 + '1)',
-          pointBackgroundColor: color5 + '1)',
+          borderColor: color5 + '1)',
+          pointBackgroundColor: color2 + '1)',
           tension: 0.1
         }]
       },
