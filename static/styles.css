@@ -63,6 +63,10 @@ canvas {
     height: 500px;
 }
 
+.navbar-dark {
+    z-index: 100;
+}
+
 .btn.edit {
     padding: 0 5px;
 }

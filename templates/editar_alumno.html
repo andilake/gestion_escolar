@@ -13,10 +13,10 @@
     <form {% if editar %} action="/editar_alumno" {% else %} action="/alta_alumno" {% endif %} method="post">
         <h3 class="mb-4">Información personal</h3>
         <div class="mb-5 d-flex flex-row bd-highlight mb-3 justify-content-center">
-            <div class="mx-3">
+            <div class="mb-3 mx-3">
                 <input autocomplete="off" class="form-control mx-auto w-auto" id="nombre" name="nombre" placeholder="Nombre(s)" type="text" required {% if editar or ver %} value="{{ alumno.nombre }}" {% else %} autofocus {% endif %}>
             </div>
-            <div class="mx-3">
+            <div class="mb-3 mx-3">
                 <input autocomplete="off" class="form-control mx-auto w-auto" id="apellidos" name="apellidos" placeholder="Apellidos" type="text" required {% if editar or ver %} value="{{ alumno.apellidos }}" {% endif %}>
             </div>
         </div>
